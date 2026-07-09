@@ -1,0 +1,31 @@
+import 'dotenv/config'
+import express from 'express'
+import cors from 'cors'
+
+import authRoutes       from './routes/auth.js'
+import dashboardRoutes  from './routes/dashboard.js'
+import ingredientRoutes from './routes/ingredients.js'
+import questRoutes      from './routes/quests.js'
+
+const app  = express()
+const PORT = process.env.PORT || 8000
+
+app.use(cors({
+  origin: [
+    process.env.CLIENT_URL || 'http://localhost:5173',
+    'http://localhost:5173',
+  ],
+  credentials: false,
+}))
+app.use(express.json())
+
+app.use('/api',             authRoutes)
+app.use('/api/dashboard',   dashboardRoutes)
+app.use('/api/ingredients', ingredientRoutes)
+app.use('/api/quests',      questRoutes)
+
+app.get('/health', (_, res) => res.json({ status: 'ok', time: new Date() }))
+
+app.listen(PORT, () => {
+  console.log(`✅ Server berjalan di http://localhost:${PORT}`)
+})
