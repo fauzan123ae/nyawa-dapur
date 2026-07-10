@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { query, queryOne } from '../db/index.js'
+import { invalidateUserCache } from '../middleware/auth.js'
 
 const format = (r) => ({
   id:           r.id,
@@ -23,6 +24,7 @@ export async function store(req, res) {
   if (!name || !quantity || !unit || !days_to_expiry)
     return res.status(422).json({ message: 'Semua field wajib diisi.' })
 
+  // Gunakan waktu real saat penginputan (termasuk jam menit detik)
   const now    = dayjs()
   const expiry = now.add(parseInt(days_to_expiry), 'day')
 
@@ -39,7 +41,7 @@ export async function update(req, res) {
   if (!ing) return
 
   const { name, quantity, unit, days_to_expiry } = req.body
-  // FIX: hitung dari purchase_date asli, bukan now()
+  // Hitung expiry dari purchaseDate asli + hari baru
   const newExpiry = dayjs(ing.purchase_date).add(parseInt(days_to_expiry), 'day')
   const newStatus = quantity > 0 ? 'active' : ing.status
 
@@ -77,6 +79,7 @@ export async function cook(req, res) {
     'UPDATE users SET xp=$1,last_active_at=NOW(),updated_at=NOW() WHERE id=$2',
     [newXp, req.user.id]
   )
+  invalidateUserCache(req.user.id)
   return res.json({ message: 'Bahan dimasak. +15 XP', xp: newXp })
 }
 

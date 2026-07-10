@@ -15,26 +15,45 @@ function checkCanClaim(type, user, now, ingredients) {
 
   switch (type) {
     case 'check_risky':
+      // Setidaknya ada 1 bahan aktif yang hampir kedaluwarsa (< 60% sisa masa aktif)
       return active.some((i) => {
         if (!i.purchase_date || !i.expiry_date) return false
-        const p = dayjs(i.purchase_date), e = dayjs(i.expiry_date)
+        const p = dayjs(i.purchase_date)
+        const e = dayjs(i.expiry_date)
         if (now.isBefore(p) || !now.isBefore(e)) return false
-        const remaining = (e.diff(now, 'second') / e.diff(p, 'second')) * 100
+        const totalDuration  = e.diff(p, 'second')
+        const remainingDuration = e.diff(now, 'second')
+        if (totalDuration <= 0) return false
+        const remaining = (remainingDuration / totalDuration) * 100
         return remaining > 0 && remaining < 60
       })
 
     case 'add_green':
-      return ingredients.some((i) =>
-        i.status === 'active' && dayjs(i.purchase_date).format('YYYY-MM-DD') === today
-      )
+      // Minimal 1 bahan ditambahkan HARI INI (berdasarkan purchase_date)
+      return ingredients.some((i) => {
+        if (i.status !== 'active') return false
+        // purchase_date bisa berupa ISO string, ambil bagian tanggalnya saja
+        const purchasedDay = dayjs(i.purchase_date).format('YYYY-MM-DD')
+        return purchasedDay === today
+      })
 
     case 'cook_saving':
-      return ingredients.some((i) => i.status === 'cooked')
+      // Minimal 1 bahan dimasak HARI INI (updated_at di hari ini dengan status cooked)
+      return ingredients.some((i) => {
+        if (i.status !== 'cooked') return false
+        if (!i.updated_at) return false
+        return dayjs(i.updated_at).format('YYYY-MM-DD') === today
+      })
 
     case 'clean_pantry': {
-      const hasWasted  = ingredients.some((i) => i.status === 'wasted')
-      const hasExpired = active.some((i) => !now.isBefore(dayjs(i.expiry_date)))
-      return !hasWasted && !hasExpired && active.length > 0
+      // Tidak ada bahan wasted HARI INI dan tidak ada bahan aktif yang sudah expired
+      const wastedToday = ingredients.some((i) => {
+        if (i.status !== 'wasted') return false
+        if (!i.updated_at) return false
+        return dayjs(i.updated_at).format('YYYY-MM-DD') === today
+      })
+      const hasExpired = active.some((i) => i.expiry_date && !now.isBefore(dayjs(i.expiry_date)))
+      return !wastedToday && !hasExpired && active.length > 0
     }
 
     case 'stale_defense':
@@ -72,7 +91,7 @@ export async function getOrCreateDailyQuests(user, now, ingredients) {
     description: q.description,
     xpReward:    q.xp_reward,
     isCompleted: q.is_completed,
-    canClaim:    checkCanClaim(q.type, user, now, ingredients),
+    canClaim:    !q.is_completed && checkCanClaim(q.type, user, now, ingredients),
   }))
 }
 
@@ -81,7 +100,6 @@ export async function claimQuest(req, res) {
   const { quest_id } = req.body
   const user         = req.user
 
-  // import simulatedNow dari dashboardController
   const { getSimulatedNow } = await import('./dashboardController.js')
   const now   = getSimulatedNow(user.id)
   const today = now.format('YYYY-MM-DD')
@@ -94,7 +112,11 @@ export async function claimQuest(req, res) {
   if (quest.type !== type) return res.status(422).json({ message: 'Quest tidak valid.' })
   if (quest.is_completed)  return res.status(422).json({ message: 'Quest sudah diklaim.' })
 
-  const rows = await query('SELECT * FROM ingredients WHERE user_id=$1', [user.id])
+  // Ambil ingredients dengan updated_at untuk pengecekan akurat
+  const rows = await query(
+    'SELECT id,name,quantity,unit,purchase_date,expiry_date,status,updated_at FROM ingredients WHERE user_id=$1',
+    [user.id]
+  )
   const canClaim = checkCanClaim(type, user, now, rows.rows)
   if (!canClaim) return res.status(422).json({ message: 'Kondisi misi belum terpenuhi.' })
 
