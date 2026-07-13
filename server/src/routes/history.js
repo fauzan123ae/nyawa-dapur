@@ -1,11 +1,11 @@
-import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
-import { getCookingHistory } from "../controllers/historyController.js";
+import { Router } from 'express'
+import { authenticate } from '../middleware/auth.js'
+import { getCookingHistory } from '../controllers/historyController.js'
 
-const router = Router();
+const router = Router()
 
-router.use(authenticate);
+router.use(authenticate)
 
-router.get("/", getCookingHistory);
+router.get('/', getCookingHistory)
 
-export default router;
+export default router   
