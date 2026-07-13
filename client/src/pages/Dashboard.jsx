@@ -321,7 +321,7 @@ export default function Dashboard() {
       setUserData(res.data.userData);
       setIngredients(res.data.ingredientsData);
       setQuests(res.data.questsData);
-      setCookingHistory(histRes.data || []);
+      setCookingHistory(Array.isArray(histRes.data) ? histRes.data : []);
     } catch (err) {
       console.error('Gagal fetch dashboard:', err);
     } finally {
@@ -445,22 +445,44 @@ export default function Dashboard() {
     setCookAmountModal(null);
     setCookAmountValue('');
 
+    // Optimistic: langsung tambahkan ke riwayat agar muncul instan
+    const optimisticEntry = {
+      id:              `temp-${Date.now()}`,
+      ingredient_id:   ing.id,
+      ingredient_name: ing.name,
+      quantity:        amount,
+      unit:            ing.unit,
+      cooked_at:       new Date().toISOString(),
+      xp_earned:       15,
+    };
+    setCookingHistory(prev => [optimisticEntry, ...prev]);
+
+    // Optimistic: kurangi stok di tampilan
+    const remaining = Math.round((ing.quantity - amount) * 100) / 100;
+    const newStatus = remaining === 0 ? 'cooked' : 'active';
+    setIngredients(prev => applyOptimisticIngredient(prev, ing.id, { quantity: remaining, status: newStatus }));
+
     try {
       await cookAmountIngredient(ing.id, amount);
 
+      // Sync data dari server (ganti optimistic dengan data nyata)
       const [res, histRes] = await Promise.all([getDashboard(), getCookingHistory()]);
       setUserData(res.data.userData);
       setIngredients(res.data.ingredientsData);
       setQuests(res.data.questsData);
-      setCookingHistory(histRes.data || []);
+      // histRes.data adalah array langsung dari server
+      const historyData = Array.isArray(histRes.data) ? histRes.data : [];
+      setCookingHistory(historyData);
 
       const updated = res.data.ingredientsData.find(i => i.id === ing.id);
       if (updated?.status === 'cooked') setActiveFilter('Dimasak');
 
-      const remaining = Math.round((ing.quantity - amount) * 100) / 100;
       triggerToast(`🔥 ${amount} ${ing.unit} ${ing.name} dimasak! Sisa: ${remaining} ${ing.unit}.`);
     } catch (err) {
       console.error(err);
+      // Rollback optimistic
+      setCookingHistory(prev => prev.filter(h => h.id !== optimisticEntry.id));
+      setIngredients(prev => applyOptimisticIngredient(prev, ing.id, { quantity: ing.quantity, status: ing.status }));
       triggerToast(err.response?.data?.message || 'Gagal memasak.', 'error');
     } finally {
       setIsCookingAmount(false);

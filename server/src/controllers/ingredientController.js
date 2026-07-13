@@ -109,20 +109,7 @@ export async function cookAmount(req, res) {
       [remaining, newStatus, ing.id]
     )
 
-    // BUG FIX 2: pastikan tabel ada & simpan riwayat masak
-    await query(
-      `CREATE TABLE IF NOT EXISTS cooking_history (
-        id              SERIAL PRIMARY KEY,
-        user_id         INTEGER NOT NULL,
-        ingredient_id   INTEGER,
-        ingredient_name TEXT    NOT NULL,
-        quantity        NUMERIC NOT NULL,
-        unit            TEXT    NOT NULL,
-        cooked_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        xp_earned       INTEGER NOT NULL DEFAULT 15
-      )`
-    )
-
+    // Simpan riwayat masak
     await query(
       `INSERT INTO cooking_history (user_id, ingredient_id, ingredient_name, quantity, unit, cooked_at, xp_earned)
        VALUES ($1, $2, $3, $4, $5, NOW(), 15)`,

@@ -2,20 +2,6 @@ import { query } from '../db/index.js'
 
 export async function getCookingHistory(req, res) {
   try {
-    // Pastikan tabel ada dulu
-    await query(
-      `CREATE TABLE IF NOT EXISTS cooking_history (
-        id              SERIAL PRIMARY KEY,
-        user_id         INTEGER NOT NULL,
-        ingredient_id   INTEGER,
-        ingredient_name TEXT    NOT NULL,
-        quantity        NUMERIC NOT NULL,
-        unit            TEXT    NOT NULL,
-        cooked_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        xp_earned       INTEGER NOT NULL DEFAULT 15
-      )`
-    )
-
     const result = await query(
       `SELECT id, ingredient_id, ingredient_name, quantity, unit, cooked_at, xp_earned
        FROM cooking_history
@@ -24,7 +10,6 @@ export async function getCookingHistory(req, res) {
        LIMIT 100`,
       [req.user.id]
     )
-
     return res.json(result.rows)
   } catch (err) {
     console.error(err)
