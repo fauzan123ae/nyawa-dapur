@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getDashboard, buyFirewood, igniteWood } from '../api/dashboard';
-import { addIngredient, updateIngredient, adjustQuantity, cookIngredient, wasteIngredient, deleteIngredient } from '../api/ingredients';
+import { addIngredient, updateIngredient, adjustQuantity, cookIngredient, cookAmountIngredient, cookBatchIngredients, wasteIngredient, deleteIngredient } from '../api/ingredients';
 import { claimQuest } from '../api/quests';
 
 // =============================================
@@ -250,8 +250,19 @@ export default function Dashboard() {
 
   const [isAddModalOpen, setIsAddModalOpen]   = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCookModalOpen, setIsCookModalOpen] = useState(false);
   const [activeFilter, setActiveFilter]       = useState('Semua');
   const [showToast, setShowToast]             = useState(null);
+
+  // Mode Masak Batch
+  const [isCookMode, setIsCookMode]           = useState(false);
+  const [selectedIds, setSelectedIds]         = useState(new Set());
+  const [isBatchCooking, setIsBatchCooking]   = useState(false);
+
+  // Modal input jumlah masak per bahan
+  const [cookAmountModal, setCookAmountModal] = useState(null); // { ingredient } | null
+  const [cookAmountValue, setCookAmountValue] = useState('');
+  const [isCookingAmount, setIsCookingAmount] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen]   = useState(false);
   const [mobileTab, setMobileTab]             = useState('pantry'); // 'pantry' | 'dapur'
 
@@ -387,15 +398,16 @@ export default function Dashboard() {
     if (loadingIds.has(id)) return;
     setLoading(id, true);
     // Optimistic
-    setIngredients(prev => applyOptimisticIngredient(prev, id, { status: 'cooked' }));
-    setActiveFilter('Dimasak');
+    setIngredients(prev => applyOptimisticIngredient(prev, id, { status: 'cooked', updatedAt: new Date().toISOString() }));
     triggerToast('🔥 Masak sukses! Api Dapur tetap menyala.');
     try {
       await cookIngredient(id);
-      // Update XP & userData saja, tanpa refetch semua
+      // Sync semua data dari server agar konsisten
       const res = await getDashboard();
       setUserData(res.data.userData);
+      setIngredients(res.data.ingredientsData);
       setQuests(res.data.questsData);
+      setActiveFilter('Dimasak');
     } catch (err) {
       setIngredients(prev => applyOptimisticIngredient(prev, id, { status: 'active' }));
       triggerToast(err.response?.data?.message || 'Gagal.', 'error');
@@ -403,6 +415,112 @@ export default function Dashboard() {
       setLoading(id, false);
     }
   };
+
+  // ── COOK AMOUNT (modal input jumlah per bahan) ──────
+  const handleOpenCookAmountModal = (ing) => {
+    setCookAmountModal(ing);
+    setCookAmountValue(String(ing.quantity)); // default: semua stok
+  };
+
+  const handleConfirmCookAmount = async (e) => {
+    e.preventDefault();
+    if (!cookAmountModal) return;
+    const ing    = cookAmountModal;
+    const amount = parseFloat(cookAmountValue);
+    if (isNaN(amount) || amount <= 0) {
+      triggerToast('Jumlah harus lebih dari 0.', 'error');
+      return;
+    }
+    if (amount > ing.quantity) {
+      triggerToast(`Stok tidak cukup. Maksimal ${ing.quantity} ${ing.unit}.`, 'error');
+      return;
+    }
+    setIsCookingAmount(true);
+    const remaining = Math.round((ing.quantity - amount) * 100) / 100;
+    const newStatus = remaining === 0 ? 'cooked' : 'active';
+    // Optimistic update
+    setIngredients(prev =>
+      applyOptimisticIngredient(prev, ing.id, { quantity: remaining, status: newStatus, updatedAt: new Date().toISOString() })
+    );
+    setCookAmountModal(null);
+    triggerToast(`🔥 ${amount} ${ing.unit} ${ing.name} dimasak! Sisa: ${remaining} ${ing.unit}.`);
+    try {
+      await cookAmountIngredient(ing.id, amount);
+      const res = await getDashboard();
+      setUserData(res.data.userData);
+      setIngredients(res.data.ingredientsData);
+      setQuests(res.data.questsData);
+      // Jika seluruh stok dimasak (remaining === 0), arahkan ke filter Dimasak
+      if (remaining === 0) setActiveFilter('Dimasak');
+    } catch (err) {
+    console.error("COOK ERROR:", err);
+    console.error("RESPONSE:", err.response?.data);
+
+    toast.error(
+        err.response?.data?.message ||
+        err.response?.data ||
+        err.message ||
+        "Gagal memasak"
+    );
+}
+  };
+  // ────────────────────────────────────────────────────
+
+  // ── COOK MODE HELPERS ──────────────────────────────
+  const toggleCookMode = () => {
+    setIsCookMode(prev => !prev);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelectIngredient = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllActive = () => {
+    const activeIds = ingredients
+      .filter(i => i.status === 'active' && calculateIngredientHealth(i) > 0)
+      .map(i => i.id);
+    setSelectedIds(new Set(activeIds));
+  };
+
+  const handleOpenCookModal = () => {
+    if (selectedIds.size === 0) {
+      triggerToast('Pilih minimal 1 bahan dulu.', 'error');
+      return;
+    }
+    setIsCookModalOpen(true);
+  };
+
+  const handleConfirmBatchCook = async () => {
+    const ids = [...selectedIds];
+    setIsBatchCooking(true);
+    // Optimistic update semua sekaligus
+    const cookedAt = new Date().toISOString();
+    setIngredients(prev => prev.map(i => ids.includes(i.id) ? { ...i, status: 'cooked', updatedAt: cookedAt } : i));
+    setIsCookModalOpen(false);
+    setIsCookMode(false);
+    setSelectedIds(new Set());
+    setActiveFilter('Dimasak');
+    try {
+      const res = await cookBatchIngredients(ids);
+      triggerToast(`🔥 ${res.data.cooked} bahan dimasak! +${ids.length * 15} XP`, 'success');
+      const dash = await getDashboard();
+      setUserData(dash.data.userData);
+      setIngredients(dash.data.ingredientsData);
+      setQuests(dash.data.questsData);
+    } catch (err) {
+      // Rollback
+      setIngredients(prev => prev.map(i => ids.includes(i.id) ? { ...i, status: 'active' } : i));
+      triggerToast(err.response?.data?.message || 'Gagal memasak.', 'error');
+    } finally {
+      setIsBatchCooking(false);
+    }
+  };
+  // ────────────────────────────────────────────────────
 
   const handleWasteIngredient = async (id) => {
     if (!window.confirm('Tandai bahan ini telah membusuk dan dibuang?')) return;
@@ -656,14 +774,51 @@ export default function Dashboard() {
       </div>
 
       {/* SECTION HEADER */}
-      <div className={`rounded-2xl p-4 sm:p-5 border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${t.sectionCard}`}>
-        <div>
-          <h2 className={`text-base sm:text-lg font-black flex items-center gap-2 ${t.sectionTitle}`}>🍃 Inventaris Hijau Dapur</h2>
-          <p className={`text-xs mt-0.5 ${t.sectionSub}`}>Pertahankan ekosistem bahan pangan bebas food-waste</p>
+      <div className={`rounded-2xl p-4 sm:p-5 border flex flex-col gap-3 ${t.sectionCard}`}>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 className={`text-base sm:text-lg font-black flex items-center gap-2 ${t.sectionTitle}`}>🍃 Inventaris Hijau Dapur</h2>
+            <p className={`text-xs mt-0.5 ${t.sectionSub}`}>Pertahankan ekosistem bahan pangan bebas food-waste</p>
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            {!isCookMode ? (
+              <>
+                <button onClick={toggleCookMode}
+                  className={`flex items-center gap-1.5 px-3 py-2 font-bold rounded-xl transition-all text-xs flex-1 sm:flex-none justify-center active:scale-95 border ${isDark ? 'bg-orange-950/40 border-orange-700/50 text-orange-400 hover:bg-orange-950/60' : 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100'}`}>
+                  🍳 Mulai Masak
+                </button>
+                <button onClick={() => setIsAddModalOpen(true)}
+                  className={`flex items-center gap-1.5 px-3 py-2 font-bold rounded-xl transition-all text-xs flex-1 sm:flex-none justify-center active:scale-95 ${t.addBtn}`}>
+                  <PlusIcon /> Tambah
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Mode Masak aktif */}
+                <button onClick={selectAllActive}
+                  className={`flex items-center gap-1.5 px-3 py-2 font-bold rounded-xl text-xs flex-1 justify-center border transition-all active:scale-95 ${isDark ? 'bg-zinc-700 border-zinc-600 text-stone-300 hover:bg-zinc-600' : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'}`}>
+                  ☑️ Pilih Semua
+                </button>
+                <button onClick={handleOpenCookModal} disabled={selectedIds.size === 0}
+                  className={`flex items-center gap-1.5 px-3 py-2 font-bold rounded-xl text-xs flex-1 justify-center transition-all active:scale-95 ${selectedIds.size > 0 ? 'bg-orange-500 hover:bg-orange-400 text-white shadow-sm' : isDark ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+                  🔥 Masak ({selectedIds.size})
+                </button>
+                <button onClick={toggleCookMode}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isDark ? 'bg-zinc-800 border-zinc-700 text-stone-400 hover:text-stone-200' : 'bg-white border-gray-200 text-gray-500 hover:text-gray-700'}`}>
+                  ✕
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        <button onClick={() => setIsAddModalOpen(true)} className={`flex items-center gap-2 px-4 py-2.5 font-bold rounded-xl transition-all text-sm w-full sm:w-auto justify-center active:scale-95 ${t.addBtn}`}>
-          <PlusIcon /> Tambah Log Bahan
-        </button>
+
+        {/* Banner mode masak */}
+        {isCookMode && (
+          <div className={`rounded-xl px-4 py-2.5 text-xs font-semibold flex items-center gap-2 border ${isDark ? 'bg-orange-950/30 border-orange-800/40 text-orange-300' : 'bg-orange-50 border-orange-200 text-orange-700'}`}>
+            <span className="text-base">🍳</span>
+            <span>Mode Masak aktif — centang bahan yang ingin dimasak, lalu tekan <strong>Masak ({selectedIds.size})</strong></span>
+          </div>
+        )}
       </div>
 
       {/* FILTER TABS */}
@@ -691,27 +846,51 @@ export default function Dashboard() {
           const expiryMs    = new Date(ing.expiryDate || ing.expiry_date).getTime();
           const remainingDays = Math.max(0, Math.ceil((expiryMs - Date.now()) / 86400000));
           const isItemLoading = loadingIds.has(ing.id);
+          const isSelectable  = isCookMode && ing.status === 'active' && !isWasted;
+          const isSelected    = selectedIds.has(ing.id);
 
           return (
-            <div key={ing.id} className={`rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 transition-all border ${t.ingCard} ${isItemLoading ? 'opacity-60' : ''}`}>
+            <div key={ing.id}
+              onClick={isSelectable ? () => toggleSelectIngredient(ing.id) : undefined}
+              className={`rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 transition-all border ${t.ingCard}
+                ${isItemLoading ? 'opacity-60' : ''}
+                ${isSelectable ? 'cursor-pointer' : ''}
+                ${isSelected ? isDark
+                    ? 'border-orange-500/70 bg-orange-950/20 shadow-[0_0_12px_rgba(249,115,22,0.15)]'
+                    : 'border-orange-400 bg-orange-50/80 shadow-sm'
+                  : ''}
+                ${isCookMode && !isSelectable ? 'opacity-40' : ''}
+              `}>
               <div className="flex justify-between items-start gap-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-sm sm:text-base flex items-center gap-2 flex-wrap">
-                    {isWasted ? '💀' : isDark ? '🔥' : '🌿'}
-                    <span className="truncate">{ing.name}</span>
-                    {isCooked && <span className={`text-xs px-2 py-0.5 rounded-md font-semibold border shrink-0 ${t.cookedBadge}`}>Selesai Dimasak</span>}
-                  </h3>
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <span className={`text-xs ${isDark ? 'text-stone-400' : 'text-gray-400'}`}>Volume:</span>
-                    {ing.status === 'active' && !isWasted ? (
-                      <div className={`flex items-center rounded-lg py-0.5 px-1.5 gap-1.5 border ${t.qtyBox}`}>
-                        <button onClick={() => handleAdjustQuantity(ing.id, 'minus')} disabled={isItemLoading} className={`text-xs font-black px-1 active:scale-90 ${t.qtyMinus}`}>−</button>
-                        <span className={`text-xs font-mono font-bold ${t.qtyText}`}>{ing.quantity} {ing.unit}</span>
-                        <button onClick={() => handleAdjustQuantity(ing.id, 'plus')} disabled={isItemLoading} className={`text-xs font-black px-1 active:scale-90 ${t.qtyPlus}`}>+</button>
-                      </div>
-                    ) : (
-                      <span className={`text-xs font-mono ${isDark ? 'text-stone-300' : 'text-gray-600'}`}>{ing.quantity} {ing.unit}</span>
-                    )}
+                <div className="flex-1 min-w-0 flex items-start gap-2.5">
+                  {/* Checkbox saat mode masak */}
+                  {isSelectable && (
+                    <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                      isSelected
+                        ? 'bg-orange-500 border-orange-500 text-white'
+                        : isDark ? 'border-zinc-500 bg-zinc-800' : 'border-gray-300 bg-white'
+                    }`}>
+                      {isSelected && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-sm sm:text-base flex items-center gap-2 flex-wrap">
+                      {isWasted ? '💀' : isDark ? '🔥' : '🌿'}
+                      <span className="truncate">{ing.name}</span>
+                      {isCooked && <span className={`text-xs px-2 py-0.5 rounded-md font-semibold border shrink-0 ${t.cookedBadge}`}>Selesai Dimasak</span>}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className={`text-xs ${isDark ? 'text-stone-400' : 'text-gray-400'}`}>Volume:</span>
+                      {ing.status === 'active' && !isWasted ? (
+                        <div onClick={e => e.stopPropagation()} className={`flex items-center rounded-lg py-0.5 px-1.5 gap-1.5 border ${t.qtyBox}`}>
+                          <button onClick={() => handleAdjustQuantity(ing.id, 'minus')} disabled={isItemLoading} className={`text-xs font-black px-1 active:scale-90 ${t.qtyMinus}`}>−</button>
+                          <span className={`text-xs font-mono font-bold ${t.qtyText}`}>{ing.quantity} {ing.unit}</span>
+                          <button onClick={() => handleAdjustQuantity(ing.id, 'plus')} disabled={isItemLoading} className={`text-xs font-black px-1 active:scale-90 ${t.qtyPlus}`}>+</button>
+                        </div>
+                      ) : (
+                        <span className={`text-xs font-mono ${isDark ? 'text-stone-300' : 'text-gray-600'}`}>{ing.quantity} {ing.unit}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <span className={`text-[10px] font-black px-2 py-1 rounded-lg border shrink-0 ${status.color}`}>
@@ -731,6 +910,29 @@ export default function Dashboard() {
                 </div>
               )}
 
+              {isCooked && ing.updatedAt && (
+                <div className={`flex items-center gap-1.5 text-[10px] font-semibold px-3 py-2 rounded-xl border ${
+                  isDark
+                    ? 'bg-emerald-950/40 border-emerald-900/40 text-emerald-400'
+                    : 'bg-green-50 border-green-200 text-green-700'
+                }`}>
+                  <span>🕐</span>
+                  <span>Dimasak pada:</span>
+                  <span className="font-bold font-mono">
+                    {new Date(ing.updatedAt).toLocaleDateString('id-ID', {
+                      weekday: 'short',
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}{' '}
+                    {new Date(ing.updatedAt).toLocaleTimeString('id-ID', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+              )}
+
               <div className={`flex justify-between items-center border-t pt-2.5 sm:pt-3 ${t.divider}`}>
                 <div>
                   {ing.status === 'active' && !isWasted && (
@@ -740,16 +942,25 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  {ing.status === 'active' && !isWasted && (
+                  {/* Sembunyikan action buttons saat mode masak */}
+                  {!isCookMode && ing.status === 'active' && !isWasted && (
                     <>
-                      <button onClick={() => handleCookIngredient(ing.id)} disabled={isItemLoading}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all active:scale-95 ${t.cookBtn}`}>🔥 Nyalakan Dapur</button>
+                      <button onClick={() => handleOpenCookAmountModal(ing)} disabled={isItemLoading}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all active:scale-95 ${t.cookBtn}`}>🔥 Masak</button>
                       <button onClick={() => handleWasteIngredient(ing.id)} disabled={isItemLoading}
                         className={`p-1.5 rounded-lg text-xs transition-colors active:scale-95 ${t.wasteBtn}`} title="Tandai Rusak">🗑️</button>
                     </>
                   )}
-                  <button onClick={() => handleDeleteIngredient(ing.id)}
-                    className={`p-1.5 rounded-lg transition-colors active:scale-95 ${t.deleteBtn}`}><TrashIcon /></button>
+                  {!isCookMode && (
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteIngredient(ing.id); }}
+                      className={`p-1.5 rounded-lg transition-colors active:scale-95 ${t.deleteBtn}`}><TrashIcon /></button>
+                  )}
+                  {/* Hint saat mode masak */}
+                  {isCookMode && isSelectable && (
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${isSelected ? 'text-orange-500' : isDark ? 'text-zinc-500' : 'text-gray-400'}`}>
+                      {isSelected ? '✓ Dipilih' : 'Tap untuk pilih'}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -864,6 +1075,59 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* MODAL MASAK BATCH */}
+      {isCookModalOpen && (
+        <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm ${t.modalOverlay}`}>
+          <div className={`rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 shadow-2xl border ${t.modal}`}>
+            <h3 className={`text-lg font-black mb-1 ${t.modalTitle}`}>🍳 Konfirmasi Memasak</h3>
+            <p className={`text-xs mb-4 ${t.modalSub}`}>Bahan-bahan berikut akan dimasak sekaligus</p>
+
+            {/* List bahan yang dipilih */}
+            <div className={`rounded-2xl border divide-y mb-4 max-h-48 overflow-y-auto ${isDark ? 'border-zinc-700 divide-zinc-700' : 'border-gray-100 divide-gray-100'}`}>
+              {ingredients
+                .filter(i => selectedIds.has(i.id))
+                .map(i => {
+                  const h = calculateIngredientHealth(i);
+                  const s = getHealthStatus(h);
+                  return (
+                    <div key={i.id} className={`flex items-center justify-between px-4 py-2.5 ${isDark ? 'bg-zinc-800/60' : 'bg-gray-50'}`}>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-base">🌿</span>
+                        <div>
+                          <p className={`text-xs font-bold ${isDark ? 'text-stone-200' : 'text-gray-700'}`}>{i.name}</p>
+                          <p className={`text-[10px] ${isDark ? 'text-stone-500' : 'text-gray-400'}`}>{i.quantity} {i.unit}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${s.color}`}>{h}%</span>
+                        <button onClick={() => toggleSelectIngredient(i.id)}
+                          className={`text-[10px] font-bold ${isDark ? 'text-zinc-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`}>✕</button>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Ringkasan XP */}
+            <div className={`rounded-xl px-4 py-3 mb-4 flex justify-between items-center border ${isDark ? 'bg-orange-950/30 border-orange-800/40' : 'bg-orange-50 border-orange-200'}`}>
+              <span className={`text-xs font-semibold ${isDark ? 'text-orange-300' : 'text-orange-700'}`}>Total XP yang didapat</span>
+              <span className={`text-sm font-black ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>+{selectedIds.size * 15} XP</span>
+            </div>
+
+            <div className="flex gap-2.5">
+              <button onClick={() => setIsCookModalOpen(false)}
+                className={`w-1/2 py-2.5 font-bold rounded-xl transition-all text-sm ${t.modalCancel}`}>
+                Batal
+              </button>
+              <button onClick={handleConfirmBatchCook} disabled={isBatchCooking}
+                className="w-1/2 py-2.5 font-bold rounded-xl transition-all text-sm bg-orange-500 hover:bg-orange-400 text-white shadow-sm disabled:opacity-50">
+                {isBatchCooking ? 'Memasak...' : `🔥 Masak ${selectedIds.size} Bahan`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL ADD */}
       {isAddModalOpen && (
         <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm ${t.modalOverlay}`}
@@ -942,6 +1206,84 @@ export default function Dashboard() {
                 <button type="button" onClick={() => { setIsEditModalOpen(false); setEditingIngredient(null); }} className={`w-1/2 py-3 font-bold rounded-xl transition-all ${t.modalCancel}`}>Batal</button>
                 <button type="submit" disabled={formSubmitting} className={`w-1/2 py-3 font-bold rounded-xl transition-all active:scale-95 ${t.modalSubmit} ${formSubmitting ? 'opacity-70' : ''}`}>
                   {formSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL MASAK JUMLAH TERTENTU */}
+      {cookAmountModal && (
+        <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm ${t.modalOverlay}`}
+          onClick={(e) => { if (e.target === e.currentTarget) setCookAmountModal(null); }}>
+          <div className={`rounded-t-3xl sm:rounded-3xl w-full sm:max-w-sm p-6 shadow-2xl border ${t.modal}`}>
+            <div className="sm:hidden w-10 h-1 rounded-full bg-gray-300 mx-auto mb-4" />
+            <button onClick={() => setCookAmountModal(null)} className={`absolute top-4 right-4 text-lg leading-none ${t.modalClose}`}>✕</button>
+
+            {/* Header */}
+            <h3 className={`text-lg font-black mb-0.5 ${t.modalTitle}`}>🍳 Masak Berapa?</h3>
+            <p className={`text-xs mb-4 ${t.modalSub}`}>
+              Stok <span className="font-bold">{cookAmountModal.name}</span>:{' '}
+              <span className={`font-black ${isDark ? 'text-emerald-400' : 'text-green-600'}`}>
+                {cookAmountModal.quantity} {cookAmountModal.unit}
+              </span>
+            </p>
+
+            <form onSubmit={handleConfirmCookAmount} className="flex flex-col gap-4">
+              {/* Input jumlah */}
+              <div>
+                <label className={`block text-xs font-bold mb-1 ${t.modalLabel}`}>
+                  Jumlah yang dimasak ({cookAmountModal.unit})
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0.01"
+                  max={cookAmountModal.quantity}
+                  value={cookAmountValue}
+                  onChange={e => setCookAmountValue(e.target.value)}
+                  className={`w-full rounded-xl px-4 py-2.5 text-sm border focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all ${t.modalInput}`}
+                  autoFocus
+                  required
+                />
+              </div>
+
+              {/* Preview sisa */}
+              {cookAmountValue && !isNaN(parseFloat(cookAmountValue)) && parseFloat(cookAmountValue) > 0 && (
+                <div className={`rounded-xl px-4 py-3 flex justify-between items-center border text-xs ${isDark ? 'bg-orange-950/30 border-orange-800/40' : 'bg-orange-50 border-orange-200'}`}>
+                  <span className={isDark ? 'text-orange-300' : 'text-orange-700'}>
+                    Sisa di kulkas setelah dimasak
+                  </span>
+                  <span className={`font-black ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
+                    {Math.max(0, Math.round((cookAmountModal.quantity - parseFloat(cookAmountValue)) * 100) / 100)} {cookAmountModal.unit}
+                  </span>
+                </div>
+              )}
+
+              {/* Quick select buttons */}
+              <div className="flex gap-2 flex-wrap">
+                {[0.25, 0.5, 1].map(frac => {
+                  const val = Math.round(cookAmountModal.quantity * frac * 100) / 100;
+                  if (val <= 0) return null;
+                  return (
+                    <button type="button" key={frac}
+                      onClick={() => setCookAmountValue(String(val))}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all active:scale-95 ${isDark ? 'bg-zinc-800 border-zinc-600 text-stone-300 hover:border-emerald-600 hover:text-emerald-400' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-700'}`}>
+                      {frac === 1 ? 'Semua' : frac === 0.5 ? '½' : '¼'} ({val} {cookAmountModal.unit})
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-2.5 mt-1">
+                <button type="button" onClick={() => setCookAmountModal(null)}
+                  className={`w-1/2 py-3 font-bold rounded-xl text-sm transition-all ${t.modalCancel}`}>
+                  Batal
+                </button>
+                <button type="submit" disabled={isCookingAmount}
+                  className={`w-1/2 py-3 font-bold rounded-xl text-sm transition-all active:scale-95 bg-orange-500 hover:bg-orange-400 text-white shadow-sm disabled:opacity-50`}>
+                  {isCookingAmount ? 'Memasak...' : '🔥 Masak'}
                 </button>
               </div>
             </form>

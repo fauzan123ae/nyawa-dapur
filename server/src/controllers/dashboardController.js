@@ -41,6 +41,7 @@ export async function getDashboard(req, res) {
       purchaseDate: r.purchase_date,
       expiryDate:   r.expiry_date,
       status:       r.status,
+      updatedAt:    r.updated_at,
     })),
     questsData: quests,
   })

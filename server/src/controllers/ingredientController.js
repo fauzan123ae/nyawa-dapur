@@ -10,6 +10,7 @@ const format = (r) => ({
   purchaseDate: r.purchase_date,
   expiryDate:   r.expiry_date,
   status:       r.status,
+  updatedAt:    r.updated_at,
 })
 
 const ownerCheck = async (id, userId, res) => {
@@ -73,7 +74,7 @@ export async function cook(req, res) {
   const ing = await ownerCheck(req.params.id, req.user.id, res)
   if (!ing) return
 
-  await query("UPDATE ingredients SET status='cooked',updated_at=NOW() WHERE id=$1", [ing.id])
+  await query("UPDATE ingredients SET status='cooked', quantity=0, updated_at=NOW() WHERE id=$1", [ing.id])
   const newXp = req.user.xp + 15
   await query(
     'UPDATE users SET xp=$1,last_active_at=NOW(),updated_at=NOW() WHERE id=$2',
@@ -81,6 +82,49 @@ export async function cook(req, res) {
   )
   invalidateUserCache(req.user.id)
   return res.json({ message: 'Bahan dimasak. +15 XP', xp: newXp })
+}
+
+export async function cookAmount(req, res) {
+  try {
+    console.log("===== COOK =====");
+
+    const ing = await ownerCheck(req.params.id, req.user.id, res);
+    if (!ing) return;
+
+    const amount = Number(req.body.amount);
+    const current = Number(ing.quantity);
+
+    console.log({
+      id: ing.id,
+      current,
+      amount
+    });
+
+    const remaining = current - amount;
+
+    const result = await query(
+      `UPDATE ingredients
+       SET quantity=$1,
+           status=$2,
+           updated_at=NOW()
+       WHERE id=$3
+       RETURNING *`,
+      [
+        remaining,
+        remaining === 0 ? "cooked" : "active",
+        ing.id,
+      ]
+    );
+
+    console.log("ROWCOUNT:", result.rowCount);
+    console.log(result.rows);
+
+    return res.json(result.rows[0]);
+
+  } catch(err) {
+    console.error(err);
+    return res.status(500).json(err.message);
+  }
 }
 
 export async function waste(req, res) {
@@ -97,4 +141,45 @@ export async function destroy(req, res) {
 
   await query('DELETE FROM ingredients WHERE id=$1', [ing.id])
   return res.json({ message: 'Bahan dihapus.' })
+}
+export async function cookBatch(req, res) {
+  const { ids } = req.body
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(422).json({ message: 'Pilih minimal 1 bahan.' })
+
+  // Validasi semua bahan milik user & statusnya active
+  const placeholders = ids.map((_, i) => `$${i + 1}`).join(',')
+  const result = await query(
+    `SELECT * FROM ingredients WHERE id IN (${placeholders})`,
+    ids
+  )
+  const rows = result.rows
+
+  const invalid = rows.find(r => r.user_id !== req.user.id)
+  if (invalid) return res.status(403).json({ message: 'Akses ditolak.' })
+
+  const notActive = rows.filter(r => r.status !== 'active')
+  if (notActive.length > 0)
+    return res.status(422).json({ message: `${notActive.length} bahan tidak dalam status aktif.` })
+
+  // Update semua sekaligus
+  await query(
+    `UPDATE ingredients SET status='cooked', quantity=0, updated_at=NOW() WHERE id IN (${placeholders})`,
+    ids
+  )
+
+  // XP: 15 per bahan
+  const xpGained = ids.length * 15
+  const newXp    = req.user.xp + xpGained
+  await query(
+    'UPDATE users SET xp=$1, last_active_at=NOW(), updated_at=NOW() WHERE id=$2',
+    [newXp, req.user.id]
+  )
+  invalidateUserCache(req.user.id)
+
+  return res.json({
+    message: `${ids.length} bahan berhasil dimasak! +${xpGained} XP`,
+    xp:      newXp,
+    cooked:  ids.length,
+  })
 }
