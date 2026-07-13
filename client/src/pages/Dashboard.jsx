@@ -423,47 +423,71 @@ export default function Dashboard() {
   };
 
   const handleConfirmCookAmount = async (e) => {
-    e.preventDefault();
-    if (!cookAmountModal) return;
-    const ing    = cookAmountModal;
-    const amount = parseFloat(cookAmountValue);
-    if (isNaN(amount) || amount <= 0) {
-      triggerToast('Jumlah harus lebih dari 0.', 'error');
-      return;
-    }
-    if (amount > ing.quantity) {
-      triggerToast(`Stok tidak cukup. Maksimal ${ing.quantity} ${ing.unit}.`, 'error');
-      return;
-    }
-    setIsCookingAmount(true);
-    const remaining = Math.round((ing.quantity - amount) * 100) / 100;
-    const newStatus = remaining === 0 ? 'cooked' : 'active';
-    // Optimistic update
-    setIngredients(prev =>
-      applyOptimisticIngredient(prev, ing.id, { quantity: remaining, status: newStatus, updatedAt: new Date().toISOString() })
-    );
-    setCookAmountModal(null);
-    triggerToast(`🔥 ${amount} ${ing.unit} ${ing.name} dimasak! Sisa: ${remaining} ${ing.unit}.`);
-    try {
-      await cookAmountIngredient(ing.id, amount);
-      const res = await getDashboard();
-      setUserData(res.data.userData);
-      setIngredients(res.data.ingredientsData);
-      setQuests(res.data.questsData);
-      // Jika seluruh stok dimasak (remaining === 0), arahkan ke filter Dimasak
-      if (remaining === 0) setActiveFilter('Dimasak');
-    } catch (err) {
-    console.error("COOK ERROR:", err);
-    console.error("RESPONSE:", err.response?.data);
+  e.preventDefault();
 
-    toast.error(
-        err.response?.data?.message ||
-        err.response?.data ||
-        err.message ||
-        "Gagal memasak"
+  if (!cookAmountModal) return;
+
+  const ing = cookAmountModal;
+  const amount = Number(cookAmountValue);
+
+  if (isNaN(amount) || amount <= 0) {
+    triggerToast("Jumlah harus lebih dari 0.", "error");
+    return;
+  }
+
+  if (amount > ing.quantity) {
+    triggerToast(
+      `Stok tidak cukup. Maksimal ${ing.quantity} ${ing.unit}.`,
+      "error"
     );
-}
-  };
+    return;
+  }
+
+  setIsCookingAmount(true);
+
+  try {
+    // Tunggu backend selesai update database
+    await cookAmountIngredient(ing.id, amount);
+
+    // Ambil data terbaru
+    const res = await getDashboard();
+
+    setUserData(res.data.userData);
+    setIngredients(res.data.ingredientsData);
+    setQuests(res.data.questsData);
+
+    // Cari ingredient terbaru
+    const updatedIngredient = res.data.ingredientsData.find(
+      item => item.id === ing.id
+    );
+
+    // Kalau masih ada stok, gunakan object baru
+    if (updatedIngredient) {
+      setCookAmountModal(updatedIngredient);
+    } else {
+      setCookAmountModal(null);
+    }
+
+    setCookAmountValue("");
+
+    if (updatedIngredient?.status === "cooked") {
+      setActiveFilter("Dimasak");
+    }
+
+    triggerToast("🔥 Berhasil memasak!");
+
+  } catch (err) {
+    console.error(err);
+
+    triggerToast(
+      err.response?.data?.message ||
+      "Gagal memasak",
+      "error"
+    );
+  } finally {
+    setIsCookingAmount(false);
+  }
+};
   // ────────────────────────────────────────────────────
 
   // ── COOK MODE HELPERS ──────────────────────────────

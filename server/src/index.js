@@ -6,6 +6,8 @@ import authRoutes       from './routes/auth.js'
 import dashboardRoutes  from './routes/dashboard.js'
 import ingredientRoutes from './routes/ingredients.js'
 import questRoutes      from './routes/quests.js'
+import historyRoutes from './routes/history.js'
+
 
 const app  = express()
 const PORT = process.env.PORT || 8000
@@ -23,6 +25,7 @@ app.use('/api',             authRoutes)
 app.use('/api/dashboard',   dashboardRoutes)
 app.use('/api/ingredients', ingredientRoutes)
 app.use('/api/quests',      questRoutes)
+app.use('/api/history', historyRoutes)
 
 app.get('/health', (_, res) => res.json({ status: 'ok', time: new Date() }))
 
