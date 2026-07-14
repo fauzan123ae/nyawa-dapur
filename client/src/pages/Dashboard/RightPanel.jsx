@@ -13,7 +13,17 @@ export default function RightPanel({ t, isDark, user, isFireLit, flameLevel, que
         <div className="flex flex-col items-center">
           <span className={`text-xs font-black uppercase tracking-widest mb-3 ${t.fireLabel}`}>Energi Api Kompor</span>
           <div className={`relative p-5 rounded-full border-4 transition-all duration-500 ${isFireLit ? t.fireRing.on : t.fireRing.off}`}>
-            <FlameIcon className={`w-16 h-16 sm:w-20 sm:h-20 ${isFireLit ? 'animate-pulse' : ''}`} level={flameLevel} isLit={isFireLit} />
+            
+            {/* Wrapper Emoji Api Hijau */}
+            <div 
+              className={`text-6xl sm:text-7xl flex items-center justify-center transition-all duration-500 ${isFireLit ? 'animate-pulse scale-110' : 'opacity-40 grayscale'}`}
+              style={{ 
+                filter: isFireLit ? 'hue-rotate(110deg) saturate(1.4) brightness(1.1)' : 'grayscale(100%)' 
+              }}
+            >
+              🔥
+            </div>
+
             {isFireLit && (
               <>
                 <span className="absolute text-sm animate-ping top-2 right-2 opacity-75">🌿</span>

@@ -10,8 +10,8 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
 
         {/* Logo */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className={`p-1.5 rounded-xl shadow-sm transition-all duration-300 ${isFireLit ? t.headerIconLit + ' scale-105' + (isDark ? ' animate-pulse' : '') : t.headerIcon}`}>
-            <FlameIcon className="w-7 h-7 text-white" level={flameLevel} isLit={isFireLit} />
+          <div className={`p-1.5 flex items-center justify-center w-10 h-10 rounded-xl shadow-sm transition-all duration-300 ${isFireLit ? t.headerIconLit + ' scale-105' + (isDark ? ' animate-pulse' : '') : t.headerIcon}`}>
+            <span className="text-xl">🍲</span>
           </div>
           <div>
             <h1 className={`text-lg font-black tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${t.logo}`}>Nyawa Dapur</h1>

@@ -24,7 +24,7 @@ export default function LeftPanel({
 }) {
   const statMap  = { Segar: t.statSegar, Waspada: t.statWaspada, Kritis: t.statKritis, Busuk: t.statBusuk }
   const countMap = { Segar: pantryStats.segar, Waspada: pantryStats.layu, Kritis: pantryStats.sekarat, Busuk: pantryStats.busuk }
-  const emojis   = { Segar: isDark ? '🟢' : '🌿', Waspada: '🟡', Kritis: '🔴', Busuk: '💀' }
+  const emojis   = { Segar: isDark ? '🌿' : '🌿', Waspada: '⚠️', Kritis: '🚨', Busuk: '💀' }
 
   return (
     <section className="flex flex-col gap-4 sm:gap-6">

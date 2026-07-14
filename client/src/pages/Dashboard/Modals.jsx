@@ -12,7 +12,7 @@ export function ModalAdd({ t, isDark, isOpen, onClose, onSubmit, form, setForm, 
       <div className={`rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 shadow-2xl relative border ${t.modal}`}>
         <div className="sm:hidden w-10 h-1 rounded-full bg-gray-300 mx-auto mb-4" />
         <button onClick={onClose} className={`absolute top-4 right-4 text-lg leading-none ${t.modalClose}`}>✕</button>
-        <h3 className={`text-lg font-black mb-1 ${t.modalTitle}`}>🍳 Daftarkan Log Bahan Makanan</h3>
+        <h3 className={`text-lg font-black mb-1 ${t.modalTitle}`}>🍳 Daftarkan Log Bahan / Makanan</h3>
         <p className={`text-xs mb-4 ${t.modalSub}`}>Catat bahan segar ke dalam inventaris dapur</p>
         <form onSubmit={onSubmit} className="flex flex-col gap-4 text-xs">
           <div>
@@ -23,7 +23,7 @@ export function ModalAdd({ t, isDark, isOpen, onClose, onSubmit, form, setForm, 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={`block font-bold mb-1 ${t.modalLabel}`}>Kuantitas*</label>
-              <input type="number" step="any" placeholder="2" value={form.qty}
+              <input type="number" step="any" placeholder="1" value={form.qty}
                 onChange={e => setForm(f => ({ ...f, qty: e.target.value }))} className={inputClass} required />
             </div>
             <div>
