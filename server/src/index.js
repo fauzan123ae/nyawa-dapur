@@ -7,7 +7,6 @@ import dashboardRoutes  from './routes/dashboard.js'
 import ingredientRoutes from './routes/ingredients.js'
 import questRoutes      from './routes/quests.js'
 import historyRoutes    from './routes/history.js'
-import { query }        from './db/index.js'
 
 const app  = express()
 const PORT = process.env.PORT || 8000
