@@ -14,8 +14,8 @@ export async function getDashboard(req, res) {
   const streakThreatened = !isFireLit && user.current_streak > 0
 
   const ingResult = await query(
-    'SELECT id,name,quantity,unit,purchase_date,expiry_date,status,updated_at FROM ingredients WHERE user_id=$1 ORDER BY id DESC',
-    [user.id]
+    'SELECT id,name,quantity,unit,purchase_date,expiry_date,status,updated_at FROM ingredients WHERE household_id=$1 ORDER BY id DESC',
+    [user.householdId]
   )
   const ingredients = ingResult.rows
 

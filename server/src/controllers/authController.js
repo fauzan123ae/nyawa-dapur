@@ -34,6 +34,25 @@ export async function register(req, res) {
       [name, email, hashed]
     )
     const user = result.rows[0]
+
+    // Buat household untuk user baru
+    const crypto = await import('crypto')
+    const inviteCode = crypto.randomBytes(4).toString('hex')
+    const hhRes = await query(
+      `INSERT INTO households (name, owner_id, invite_code) VALUES ($1, $2, $3) RETURNING id`,
+      [`Dapur ${user.name}`, user.id, inviteCode]
+    )
+    const hhId = hhRes.rows[0].id
+
+    // Tambahkan user sebagai owner di household_members
+    await query(
+      `INSERT INTO household_members (household_id, user_id, role) VALUES ($1, $2, 'owner')`,
+      [hhId, user.id]
+    )
+
+    // Set householdId di user object untuk konsistensi
+    user.householdId = hhId
+
     return res.status(201).json({ token: makeToken(user), user: formatUser(user) })
   } catch (err) {
     console.error(err)

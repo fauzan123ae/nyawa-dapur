@@ -13,10 +13,10 @@ const format = (r) => ({
   updatedAt:    r.updated_at,
 })
 
-const ownerCheck = async (id, userId, res) => {
+const ownerCheck = async (id, reqUser, res) => {
   const ing = await queryOne('SELECT * FROM ingredients WHERE id=$1', [id])
   if (!ing)                    { res.status(404).json({ message: 'Bahan tidak ditemukan.' }); return null }
-  if (ing.user_id !== userId)  { res.status(403).json({ message: 'Akses ditolak.' }); return null }
+  if (ing.household_id !== reqUser.householdId) { res.status(403).json({ message: 'Akses ditolak.' }); return null }
   return ing
 }
 
@@ -29,15 +29,15 @@ export async function store(req, res) {
   const expiry = now.add(parseInt(days_to_expiry), 'day')
 
   const result = await query(
-    `INSERT INTO ingredients (user_id,name,quantity,unit,purchase_date,expiry_date,status)
-     VALUES ($1,$2,$3,$4,$5,$6,'active') RETURNING *`,
-    [req.user.id, name, quantity, unit, now.toISOString(), expiry.toISOString()]
+    `INSERT INTO ingredients (user_id, household_id, name, quantity, unit, purchase_date, expiry_date, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,'active') RETURNING *`,
+    [req.user.id, req.user.householdId, name, quantity, unit, now.toISOString(), expiry.toISOString()]
   )
   return res.status(201).json({ message: 'Bahan ditambahkan.', ingredient: format(result.rows[0]) })
 }
 
 export async function update(req, res) {
-  const ing = await ownerCheck(req.params.id, req.user.id, res)
+  const ing = await ownerCheck(req.params.id, req.user, res)
   if (!ing) return
 
   const { name, quantity, unit, days_to_expiry } = req.body
@@ -53,7 +53,7 @@ export async function update(req, res) {
 }
 
 export async function adjust(req, res) {
-  const ing = await ownerCheck(req.params.id, req.user.id, res)
+  const ing = await ownerCheck(req.params.id, req.user, res)
   if (!ing) return
 
   const stepMap = { kilogram: 0.25, liter: 0.25, gram: 50 }
@@ -69,7 +69,7 @@ export async function adjust(req, res) {
 }
 
 export async function cook(req, res) {
-  const ing = await ownerCheck(req.params.id, req.user.id, res)
+  const ing = await ownerCheck(req.params.id, req.user, res)
   if (!ing) return
 
   await query("UPDATE ingredients SET status='cooked', quantity=0, updated_at=NOW() WHERE id=$1", [ing.id])
@@ -85,7 +85,7 @@ export async function cook(req, res) {
 // BUG FIX 1 & 2: validasi input, simpan ke cooking_history, +XP dengan benar
 export async function cookAmount(req, res) {
   try {
-    const ing = await ownerCheck(req.params.id, req.user.id, res)
+    const ing = await ownerCheck(req.params.id, req.user, res)
     if (!ing) return
 
     if (ing.status !== 'active')
@@ -138,7 +138,7 @@ export async function cookAmount(req, res) {
 }
 
 export async function waste(req, res) {
-  const ing = await ownerCheck(req.params.id, req.user.id, res)
+  const ing = await ownerCheck(req.params.id, req.user, res)
   if (!ing) return
 
   await query("UPDATE ingredients SET status='wasted',updated_at=NOW() WHERE id=$1", [ing.id])
@@ -146,7 +146,7 @@ export async function waste(req, res) {
 }
 
 export async function destroy(req, res) {
-  const ing = await ownerCheck(req.params.id, req.user.id, res)
+  const ing = await ownerCheck(req.params.id, req.user, res)
   if (!ing) return
 
   await query('DELETE FROM ingredients WHERE id=$1', [ing.id])
@@ -165,7 +165,7 @@ export async function cookBatch(req, res) {
   )
   const rows = result.rows
 
-  const invalid = rows.find(r => r.user_id !== req.user.id)
+  const invalid = rows.find(r => r.household_id !== req.user.householdId)
   if (invalid) return res.status(403).json({ message: 'Akses ditolak.' })
 
   const notActive = rows.filter(r => r.status !== 'active')

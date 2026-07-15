@@ -47,6 +47,11 @@ export async function authenticate(req, res, next) {
     if (!user) {
       user = await queryOne('SELECT * FROM users WHERE id = $1', [decoded.id])
       if (!user) return res.status(401).json({ message: 'User tidak ditemukan.' })
+      
+      // Ambil household_id dari household_members
+      const membership = await queryOne('SELECT household_id FROM household_members WHERE user_id = $1 LIMIT 1', [user.id])
+      user.householdId = membership ? membership.household_id : null
+      
       setCache(decoded.id, user)
     }
 
