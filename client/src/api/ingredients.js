@@ -1,4 +1,5 @@
 import client from './client'
+export const getIngredients       = ()              => client.get('/ingredients')
 export const addIngredient        = (data)          => client.post('/ingredients', data)
 export const updateIngredient     = (id, data)      => client.put(`/ingredients/${id}`, data)
 export const adjustQuantity       = (id, dir)       => client.put(`/ingredients/${id}/adjust`, { direction: dir })

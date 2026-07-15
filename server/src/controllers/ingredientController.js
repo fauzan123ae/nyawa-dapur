@@ -20,6 +20,15 @@ const ownerCheck = async (id, reqUser, res) => {
   return ing
 }
 
+// Ambil semua ingredients milik household aktif user
+export async function index(req, res) {
+  const result = await query(
+    `SELECT * FROM ingredients WHERE household_id = $1 ORDER BY id DESC`,
+    [req.householdId]
+  )
+  return res.json(result.rows.map(format))
+}
+
 export async function store(req, res) {
   const { name, quantity, unit, days_to_expiry } = req.body
   if (!name || !quantity || !unit || !days_to_expiry)

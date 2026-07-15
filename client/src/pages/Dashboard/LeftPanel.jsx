@@ -23,6 +23,7 @@ export default function LeftPanel({
   onDelete,
   onDeleteHistory,
   onClearAllHistory,
+  children,
 }) {
   const statMap  = { Segar: t.statSegar, Waspada: t.statWaspada, Kritis: t.statKritis, Busuk: t.statBusuk }
   const countMap = { Segar: pantryStats.segar, Waspada: pantryStats.layu, Kritis: pantryStats.sekarat, Busuk: pantryStats.busuk }
@@ -169,44 +170,8 @@ export default function LeftPanel({
         </div>
       )}
 
-      {/* INGREDIENT LIST */}
-      {activeFilter !== 'Riwayat' && (
-        <div className="flex flex-col gap-3">
-          {filteredIngredients.length === 0 ? (
-            <div className={`border border-dashed rounded-2xl p-8 sm:p-10 text-center flex flex-col items-center gap-3 ${t.emptyBox}`}>
-              <span className="text-4xl">🌱</span>
-              <p className="text-sm">Tidak ada data bahan makanan dalam kategori ini.</p>
-            </div>
-          ) : filteredIngredients.map(ing => {
-            const health    = calculateIngredientHealth(ing)
-            const statusInfo = getHealthStatus(health)
-            const isWasted  = ing.status === 'wasted' || (ing.status === 'active' && health <= 0)
-            const isCooked  = ing.status === 'cooked'
-            return (
-              <IngredientCard
-                key={ing.id}
-                ing={ing}
-                t={t}
-                isDark={isDark}
-                health={health}
-                statusInfo={statusInfo}
-                isWasted={isWasted}
-                isCooked={isCooked}
-                isItemLoading={loadingIds.has(ing.id)}
-                isCookMode={isCookMode}
-                isSelectable={isCookMode && ing.status === 'active' && !isWasted}
-                isSelected={selectedIds.has(ing.id)}
-                onToggleSelect={() => onToggleSelectIngredient(ing.id)}
-                onAdjustQuantity={onAdjustQuantity}
-                onOpenEditModal={onOpenEditModal}
-                onOpenCookAmountModal={onOpenCookAmountModal}
-                onWaste={onWaste}
-                onDelete={onDelete}
-              />
-            )
-          })}
-        </div>
-      )}
+      {/* INGREDIENT LIST FROM PARENT */}
+      {activeFilter !== 'Riwayat' && children}
     </section>
   )
 }

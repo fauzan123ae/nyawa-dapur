@@ -1,9 +1,10 @@
 import { Router } from 'express'
-import { store, update, adjust, cook, cookAmount, cookBatch, waste, destroy } from '../controllers/ingredientController.js'
+import { index, store, update, adjust, cook, cookAmount, cookBatch, waste, destroy } from '../controllers/ingredientController.js'
 import { authenticate } from '../middleware/auth.js'
 
 const router = Router()
 router.use(authenticate)
+router.get('/',                index)
 router.post('/',               store)
 router.post('/cook-batch',     cookBatch)
 router.put('/:id',             update)

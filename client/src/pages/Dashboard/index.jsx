@@ -14,6 +14,7 @@ import LeftPanel from './LeftPanel'
 import RightPanel from './RightPanel'
 import { ModalAdd, ModalEdit, ModalBatchCook, ModalCookAmount } from './Modals'
 import { useIngredientHealth } from './useIngredientHealth'
+import IngredientList from './IngredientList'
 
 const formatRow = (r) => ({
   id:           r.id,
@@ -50,14 +51,18 @@ export default function Dashboard() {
 
   // ── Data state ────────────────────────────
   const [userData, setUserData]         = useState(null)
-  const [ingredients, setIngredients]   = useState([])
   const [quests, setQuests]             = useState([])
   const [cookingHistory, setCookingHistory] = useState([])
+  const [pantryStats, setPantryStats]   = useState({ segar: 0, layu: 0, sekarat: 0, busuk: 0 })
   const [now, setNow]                   = useState(new Date().toISOString())
   const [pageLoading, setPageLoading]   = useState(true)
 
   // ── UI state ──────────────────────────────
   const [activeFilter, setActiveFilter] = useState('Semua')
+  const ingredientListRef = useRef(null)
+  const setIngredients = useCallback((updater) => {
+    ingredientListRef.current?.setIngredients(updater)
+  }, [])
   const [showToast, setShowToast]       = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileTab, setMobileTab]       = useState('pantry')
@@ -90,15 +95,6 @@ export default function Dashboard() {
   const { calculateIngredientHealth: calcHealth, getHealthStatus } = useIngredientHealth(t)
   const calculateIngredientHealth = useCallback((ing) => calcHealth(ing, now), [calcHealth, now])
 
-  // ── Realtime ──────────────────────────────
-  const { realtimeStatus } = useIngredientRealtime({
-    householdId: activeHouseholdId,
-    currentUserId: userData?.id,
-    onAdded:   (row) => setIngredients(prev => [formatRow(row), ...prev]),
-    onUpdated: (row) => setIngredients(prev => prev.map(i => i.id === row.id ? { ...i, ...formatRow(row) } : i)),
-    onDeleted: (row) => setIngredients(prev => prev.filter(i => i.id !== row.id)),
-  })
-
   // ── Toast ─────────────────────────────────
   const triggerToast = useCallback((message, type = 'success') => {
     if (toastRef.current) clearTimeout(toastRef.current)
@@ -118,7 +114,6 @@ export default function Dashboard() {
     try {
       const [res, histRes] = await Promise.all([getDashboard(), getCookingHistory()])
       setUserData(res.data.userData)
-      setIngredients(res.data.ingredientsData)
       setQuests(res.data.questsData)
       setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
     } catch (err) {
@@ -165,9 +160,9 @@ export default function Dashboard() {
     try {
       await addIngredient({ name: saved.name, quantity: saved.qty, unit: saved.unit, days_to_expiry: saved.daysToExpiry })
       const res = await getDashboard()
-      setIngredients(res.data.ingredientsData)
       setUserData(res.data.userData)
       setQuests(res.data.questsData)
+      ingredientListRef.current?.refresh()
     } catch (err) {
       setIngredients(prev => prev.filter(i => i.id !== tempId))
       triggerToast(err.response?.data?.message || 'Gagal menambah bahan.', 'error')
@@ -196,6 +191,7 @@ export default function Dashboard() {
     triggerToast('Log bahan diperbarui.')
     try {
       await updateIngredient(old.id, { name: editForm.name, quantity: editForm.qty, unit: editForm.unit, days_to_expiry: editForm.daysToExpiry })
+      ingredientListRef.current?.refresh()
     } catch (err) {
       setIngredients(prev => applyOptimistic(prev, old.id, old))
       triggerToast(err.response?.data?.message || 'Gagal update.', 'error')
@@ -231,10 +227,10 @@ export default function Dashboard() {
     try {
       await cookAmountIngredient(ing.id, amount)
       const [res, histRes] = await Promise.all([getDashboard(), getCookingHistory()])
-      setUserData(res.data.userData); setIngredients(res.data.ingredientsData); setQuests(res.data.questsData)
+      setUserData(res.data.userData); setQuests(res.data.questsData)
       setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
-      const updated = res.data.ingredientsData.find(i => i.id === ing.id)
-      if (updated?.status === 'cooked') setActiveFilter('Dimasak')
+      ingredientListRef.current?.refresh()
+      if (remaining === 0) setActiveFilter('Dimasak')
       triggerToast(`🔥 ${amount} ${ing.unit} ${ing.name} dimasak! Sisa: ${remaining} ${ing.unit}.`)
     } catch (err) {
       setCookingHistory(prev => prev.filter(h => h.id !== optimisticEntry.id))
@@ -255,6 +251,7 @@ export default function Dashboard() {
   })
 
   const selectAllActive = () => {
+    const ingredients = ingredientListRef.current?.ingredients || []
     const ids = ingredients.filter(i => i.status === 'active' && calculateIngredientHealth(i) > 0).map(i => i.id)
     setSelectedIds(new Set(ids))
   }
@@ -266,10 +263,11 @@ export default function Dashboard() {
     setIngredients(prev => prev.map(i => ids.includes(i.id) ? { ...i, status: 'cooked', updatedAt: cookedAt } : i))
     setIsBatchCookOpen(false); setIsCookMode(false); setSelectedIds(new Set()); setActiveFilter('Dimasak')
     try {
-      const res = await cookBatchIngredients(ids)
-      triggerToast(`🔥 ${res.data.cooked} bahan dimasak! +${ids.length * 15} XP`)
+      await cookBatchIngredients(ids)
+      triggerToast(`🔥 ${ids.length} bahan dimasak! +${ids.length * 15} XP`)
       const dash = await getDashboard()
-      setUserData(dash.data.userData); setIngredients(dash.data.ingredientsData); setQuests(dash.data.questsData)
+      setUserData(dash.data.userData); setQuests(dash.data.questsData)
+      ingredientListRef.current?.refresh()
     } catch (err) {
       setIngredients(prev => prev.map(i => ids.includes(i.id) ? { ...i, status: 'active' } : i))
       triggerToast(err.response?.data?.message || 'Gagal memasak.', 'error')
@@ -284,9 +282,14 @@ export default function Dashboard() {
     if (loadingIds.has(id)) return
     setLoading(id, true)
     setIngredients(prev => applyOptimistic(prev, id, { status: 'wasted' }))
-    triggerToast('Bahan ditandai sebagai food waste.', 'error')
-    try { await wasteIngredient(id) }
-    catch { setIngredients(prev => applyOptimistic(prev, id, { status: 'active' })); triggerToast('Gagal.', 'error') }
+    try {
+      await wasteIngredient(id)
+      ingredientListRef.current?.refresh()
+      triggerToast('Bahan dicatat sebagai wasted.', 'error')
+    } catch { 
+      setIngredients(prev => applyOptimistic(prev, id, { status: 'active' })); 
+      triggerToast('Gagal.', 'error') 
+    }
     finally { setLoading(id, false) }
   }
 
@@ -294,6 +297,7 @@ export default function Dashboard() {
     const key = `qty-${id}`
     if (loadingIds.has(key)) return
     setLoading(key, true)
+    const ingredients = ingredientListRef.current?.ingredients || []
     const ing = ingredients.find(i => i.id === id)
     if (!ing) return
     const stepMap = { kilogram: 0.25, liter: 0.25, gram: 50 }
@@ -307,11 +311,17 @@ export default function Dashboard() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Hapus log bahan ini secara permanen?')) return
+    const ingredients = ingredientListRef.current?.ingredients || []
     const backup = ingredients.find(i => i.id === id)
     setIngredients(prev => prev.filter(i => i.id !== id))
-    triggerToast('Data bahan dibersihkan.')
-    try { await deleteIngredient(id) }
-    catch { setIngredients(prev => backup ? [backup, ...prev] : prev); triggerToast('Gagal.', 'error') }
+    try {
+      await deleteIngredient(id)
+      ingredientListRef.current?.refresh()
+      triggerToast('Bahan berhasil dihapus dari sistem.')
+    } catch {
+      setIngredients(prev => backup ? [backup, ...prev] : prev)
+      triggerToast('Gagal.', 'error')
+    }
   }
 
   // ── History ───────────────────────────────
@@ -386,28 +396,6 @@ export default function Dashboard() {
     return 'Spark'
   }, [user])
 
-  const pantryStats = useMemo(() => {
-    let segar = 0, layu = 0, sekarat = 0, busuk = 0
-    ingredients.forEach(i => {
-      if (i.status === 'wasted') { busuk++; return }
-      if (i.status === 'active') {
-        const h = calculateIngredientHealth(i)
-        if (h <= 0) busuk++; else if (h < 30) sekarat++; else if (h < 60) layu++; else segar++
-      }
-    })
-    return { segar, layu, sekarat, busuk }
-  }, [ingredients, calculateIngredientHealth])
-
-  const filteredIngredients = useMemo(() => {
-    return ingredients.filter(i => {
-      if (activeFilter === 'Dimasak') return i.status === 'cooked'
-      if (activeFilter === 'Busuk')   return i.status === 'wasted' || (i.status === 'active' && calculateIngredientHealth(i) <= 0)
-      if (i.status !== 'active')      return false
-      if (activeFilter === 'Semua')   return true
-      return getHealthStatus(calculateIngredientHealth(i)).label === activeFilter
-    })
-  }, [ingredients, activeFilter, calculateIngredientHealth, getHealthStatus])
-
   // ── Loading screen ────────────────────────
   if (pageLoading) return (
     <div className={`min-h-screen flex items-center justify-center ${t.page}`}>
@@ -421,7 +409,7 @@ export default function Dashboard() {
   // ── Render ────────────────────────────────
   const sharedPanelProps = {
     t, isDark,
-    ingredients, filteredIngredients, cookingHistory,
+    cookingHistory,
     activeFilter, setActiveFilter,
     isCookMode, selectedIds,
     pantryStats, loadingIds,
@@ -447,7 +435,6 @@ export default function Dashboard() {
         t={t} isDark={isDark} user={user} isFireLit={isFireLit} flameLevel={flameLevel}
         mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen}
         toggleTheme={toggleTheme} logout={logout} activeHouseholdName={activeHouseholdName}
-        realtimeStatus={realtimeStatus}
       />
 
       {/* MOBILE TAB SWITCHER */}
@@ -463,21 +450,26 @@ export default function Dashboard() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 py-4 sm:py-6 md:px-8">
-        {/* Desktop layout */}
-        <div className="hidden lg:grid grid-cols-12 gap-8">
-          <div className="col-span-7"><LeftPanel {...sharedPanelProps} /></div>
-          <div className="col-span-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className={`lg:col-span-7 ${mobileTab !== 'pantry' ? 'hidden lg:block' : ''}`}>
+            <LeftPanel {...sharedPanelProps}>
+              <IngredientList
+                ref={ingredientListRef}
+                t={t} isDark={isDark} activeFilter={activeFilter}
+                isCookMode={isCookMode} selectedIds={selectedIds} loadingIds={loadingIds}
+                calculateIngredientHealth={calculateIngredientHealth} getHealthStatus={getHealthStatus}
+                onToggleCookMode={toggleCookMode} onSelectAllActive={selectAllActive} onOpenCookModal={() => { if (selectedIds.size === 0) { triggerToast('Pilih minimal 1 bahan dulu.', 'error'); return } setIsBatchCookOpen(true) }}
+                onToggleSelectIngredient={toggleSelectIngredient} onOpenAddModal={() => setIsAddOpen(true)}
+                onOpenEditModal={handleOpenEdit} onAdjustQuantity={handleAdjustQuantity}
+                onOpenCookAmountModal={handleOpenCookAmount} onWaste={handleWaste} onDelete={handleDelete}
+                onDataLoaded={(data, stats) => setPantryStats(stats || { segar: 0, layu: 0, sekarat: 0, busuk: 0 })}
+              />
+            </LeftPanel>
+          </div>
+          <div className={`lg:col-span-5 ${mobileTab !== 'dapur' ? 'hidden lg:block' : ''}`}>
             <RightPanel t={t} isDark={isDark} user={user} isFireLit={isFireLit} flameLevel={flameLevel}
               quests={quests} onBuyFirewood={handleBuyFirewood} onIgniteWood={handleIgniteWood} onClaimQuest={handleClaimQuest} />
           </div>
-        </div>
-        {/* Mobile layout */}
-        <div className="lg:hidden">
-          {mobileTab === 'pantry'
-            ? <LeftPanel {...sharedPanelProps} />
-            : <RightPanel t={t} isDark={isDark} user={user} isFireLit={isFireLit} flameLevel={flameLevel}
-                quests={quests} onBuyFirewood={handleBuyFirewood} onIgniteWood={handleIgniteWood} onClaimQuest={handleClaimQuest} />
-          }
         </div>
       </main>
 
@@ -493,7 +485,7 @@ export default function Dashboard() {
       {/* MODALS */}
       <ModalAdd      t={t} isDark={isDark} isOpen={isAddOpen}  onClose={() => setIsAddOpen(false)}  onSubmit={handleAdd}      form={addForm}  setForm={setAddForm}  isSubmitting={isAddSubmitting} />
       <ModalEdit     t={t} isDark={isDark} isOpen={isEditOpen} onClose={() => { setIsEditOpen(false); setEditingIng(null) }} onSubmit={handleSaveEdit} form={editForm} setForm={setEditForm} isSubmitting={isEditSubmitting} ingredient={editingIng} />
-      <ModalBatchCook t={t} isDark={isDark} isOpen={isBatchCookOpen} selectedIds={selectedIds} ingredients={ingredients} isBatchCooking={isBatchCooking}
+      <ModalBatchCook t={t} isDark={isDark} isOpen={isBatchCookOpen} selectedIds={selectedIds} ingredients={ingredientListRef.current?.ingredients || []} isBatchCooking={isBatchCooking}
         onClose={() => setIsBatchCookOpen(false)} onConfirm={handleConfirmBatchCook} onToggleSelect={toggleSelectIngredient}
         calculateIngredientHealth={calculateIngredientHealth} getHealthStatus={getHealthStatus} />
       <ModalCookAmount t={t} isDark={isDark} ingredient={cookAmountIng} value={cookAmountValue} onChange={setCookAmountValue}
