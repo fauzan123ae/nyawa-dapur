@@ -63,6 +63,9 @@ export default function Dashboard() {
   const setIngredients = useCallback((updater) => {
     ingredientListRef.current?.setIngredients(updater)
   }, [])
+  const handleDataLoaded = useCallback((data, stats) => {
+    setPantryStats(stats || { segar: 0, layu: 0, sekarat: 0, busuk: 0 })
+  }, [])
   const [showToast, setShowToast]       = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileTab, setMobileTab]       = useState('pantry')
@@ -462,7 +465,7 @@ export default function Dashboard() {
                 onToggleSelectIngredient={toggleSelectIngredient} onOpenAddModal={() => setIsAddOpen(true)}
                 onOpenEditModal={handleOpenEdit} onAdjustQuantity={handleAdjustQuantity}
                 onOpenCookAmountModal={handleOpenCookAmount} onWaste={handleWaste} onDelete={handleDelete}
-                onDataLoaded={(data, stats) => setPantryStats(stats || { segar: 0, layu: 0, sekarat: 0, busuk: 0 })}
+                onDataLoaded={handleDataLoaded}
               />
             </LeftPanel>
           </div>
