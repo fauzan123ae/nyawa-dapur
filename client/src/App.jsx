@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import Dashboard from './pages/Dashboard'
-import Profile   from './pages/Profile'
-import Login     from './pages/Login'
-import Register  from './pages/Register'
+import Dashboard      from './pages/Dashboard'
+import Profile        from './pages/Profile'
+import KitchenSelect  from './pages/KitchenSelect'
+import Login          from './pages/Login'
+import Register       from './pages/Register'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -26,11 +27,12 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/"          element={<Navigate to="/dashboard" replace />} />
-          <Route path="/login"     element={<GuestRoute><Login /></GuestRoute>} />
-          <Route path="/register"  element={<GuestRoute><Register /></GuestRoute>} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/profile"   element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/"               element={<Navigate to="/dashboard" replace />} />
+          <Route path="/login"          element={<GuestRoute><Login /></GuestRoute>} />
+          <Route path="/register"       element={<GuestRoute><Register /></GuestRoute>} />
+          <Route path="/dashboard"      element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/profile"        element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/kitchen-select" element={<ProtectedRoute><KitchenSelect /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

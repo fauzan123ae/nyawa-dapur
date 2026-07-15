@@ -7,7 +7,7 @@ import Header from './Dashboard/Header'
 import { themes } from './Dashboard/theme'
 
 export default function Profile() {
-  const { user, setUser, logout } = useAuth()
+  const { user, setUser, logout, activeHouseholdName } = useAuth()
   const navigate = useNavigate()
 
   // Theme logic
@@ -119,7 +119,7 @@ export default function Profile() {
         t={t} isDark={isDark} user={user} isFireLit={isFireLit} flameLevel={flameLevel}
         mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen}
         toggleTheme={toggleTheme} logout={logout}
-        onOpenHousehold={() => navigate('/dashboard')}
+        activeHouseholdName={activeHouseholdName}
       />
 
       <main className="max-w-3xl mx-auto px-4 py-8">

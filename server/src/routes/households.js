@@ -5,6 +5,7 @@ import {
   joinHousehold,
   getMembers,
   leaveHousehold,
+  getMyHouseholds,
 } from '../controllers/householdController.js'
 
 const router = express.Router()
@@ -15,5 +16,6 @@ router.post('/create', createHousehold)
 router.post('/join', joinHousehold)
 router.get('/members', getMembers)
 router.post('/leave', leaveHousehold)
+router.get('/mine', getMyHouseholds)
 
 export default router

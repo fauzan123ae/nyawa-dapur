@@ -8,10 +8,12 @@ const client = axios.create({
   },
 })
 
-// Sisipkan token JWT ke setiap request
+// Sisipkan token JWT + household ID ke setiap request
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem('jwt_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+  const hid = localStorage.getItem('nd-household-id')
+  if (hid) config.headers['X-Household-Id'] = hid
   return config
 })
 

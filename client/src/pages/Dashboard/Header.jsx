@@ -4,7 +4,7 @@ import { FlameIcon, SunIcon, MoonIcon, MenuIcon, ChevronUpIcon } from './icons'
 // =============================================
 // HEADER — sticky top bar
 // =============================================
-export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileMenuOpen, setMobileMenuOpen, toggleTheme, logout, onOpenHousehold }) {
+export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileMenuOpen, setMobileMenuOpen, toggleTheme, logout, activeHouseholdName }) {
   const navigate = useNavigate()
   
   return (
@@ -37,8 +37,8 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
           <button onClick={toggleTheme} className={`px-2.5 py-1 rounded-full border text-xs font-bold flex items-center gap-1 ${t.toggleBtn}`}>
             {isDark ? <SunIcon /> : <MoonIcon />}
           </button>
-          <button onClick={onOpenHousehold} className={`px-2.5 py-1 rounded-full border text-xs font-bold flex items-center gap-1 ${t.toggleBtn}`} title="Dapur Keluarga">
-            👨‍👩‍👧
+          <button onClick={() => navigate('/kitchen-select')} className={`px-2.5 py-1 rounded-full border text-xs font-bold flex items-center gap-1.5 ${t.toggleBtn}`} title="Ganti Dapur">
+            🏠 <span className="max-w-[100px] truncate">{activeHouseholdName || 'Dapur'}</span>
           </button>
           <button onClick={() => navigate('/profile')} className={`px-2.5 py-1 rounded-full border text-xs font-bold transition-all ${t.toggleBtn}`}>
             Profil
@@ -72,8 +72,8 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
               <button onClick={() => { toggleTheme(); setMobileMenuOpen(false) }} className={`px-3 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 ${t.toggleBtn}`}>
                 {isDark ? <SunIcon /> : <MoonIcon />} {isDark ? 'Terang' : 'Gelap'}
               </button>
-              <button onClick={() => { onOpenHousehold(); setMobileMenuOpen(false) }} className={`px-3 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 ${t.toggleBtn}`}>
-                👨‍👩‍👧 Dapur
+              <button onClick={() => { navigate('/kitchen-select'); setMobileMenuOpen(false) }} className={`px-3 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 ${t.toggleBtn}`}>
+                🏠 Ganti Dapur
               </button>
               <button onClick={() => { navigate('/profile'); setMobileMenuOpen(false) }} className={`px-3 py-1.5 rounded-full border text-xs font-bold transition-all ${t.toggleBtn}`}>
                 Profil

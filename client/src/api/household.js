@@ -15,3 +15,7 @@ export const getHouseholdMembers = async () => {
 export const leaveHousehold = async () => {
   return client.post('/households/leave')
 }
+
+export const getMyHouseholds = async () => {
+  return client.get('/households/mine')
+}

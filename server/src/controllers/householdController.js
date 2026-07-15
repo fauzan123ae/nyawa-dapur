@@ -14,8 +14,7 @@ export async function createHousehold(req, res) {
     )
     const household = result.rows[0]
 
-    // Pindah ke household baru sbg owner
-    await query(`DELETE FROM household_members WHERE user_id = $1`, [req.user.id])
+    // Tambahkan user sbg owner di household baru
     await query(
       `INSERT INTO household_members (household_id, user_id, role) VALUES ($1, $2, 'owner')`,
       [household.id, req.user.id]
@@ -37,12 +36,12 @@ export async function joinHousehold(req, res) {
     const household = await queryOne('SELECT * FROM households WHERE invite_code = $1', [invite_code])
     if (!household) return res.status(404).json({ message: 'Dapur tidak ditemukan atau kode salah.' })
 
-    if (req.user.householdId === household.id) {
+    const isMember = await queryOne('SELECT * FROM household_members WHERE user_id = $1 AND household_id = $2', [req.user.id, household.id])
+    if (isMember) {
       return res.status(400).json({ message: 'Anda sudah berada di dapur ini.' })
     }
 
-    // Pindah ke household baru sbg member
-    await query(`DELETE FROM household_members WHERE user_id = $1`, [req.user.id])
+    // Tambahkan user sbg member di household baru
     await query(
       `INSERT INTO household_members (household_id, user_id, role) VALUES ($1, $2, 'member')`,
       [household.id, req.user.id]
@@ -78,35 +77,41 @@ export async function getMembers(req, res) {
   }
 }
 
+export async function getMyHouseholds(req, res) {
+  try {
+    const result = await query(
+      `SELECT h.id, h.name, h.invite_code, hm.role, 
+        (SELECT COUNT(*) FROM household_members WHERE household_id = h.id) as member_count,
+        CASE WHEN h.owner_id = $1 AND h.name = $2 THEN true ELSE false END as is_personal
+       FROM households h
+       JOIN household_members hm ON h.id = hm.household_id
+       WHERE hm.user_id = $1
+       ORDER BY is_personal DESC, h.created_at ASC`,
+      [req.user.id, `Dapur ${req.user.name}`]
+    )
+    return res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+  }
+}
+
 export async function leaveHousehold(req, res) {
   try {
+    if (!req.user.householdId) return res.status(400).json({ message: 'Tidak ada dapur yang aktif.' })
+
     const membership = await queryOne(
-      'SELECT * FROM household_members WHERE user_id = $1',
-      [req.user.id]
+      'SELECT * FROM household_members WHERE user_id = $1 AND household_id = $2',
+      [req.user.id, req.user.householdId]
     )
 
-    if (!membership) return res.status(400).json({ message: 'Anda tidak berada di dapur manapun.' })
+    if (!membership) return res.status(400).json({ message: 'Anda tidak berada di dapur ini.' })
     if (membership.role === 'owner') {
-      return res.status(400).json({ message: 'Owner tidak bisa keluar dari dapur. Hapus dapur atau transfer kepemilikan (jika fitur tersedia).' })
+      return res.status(400).json({ message: 'Owner tidak bisa keluar dari dapur. Hapus dapur (jika fitur tersedia).' })
     }
 
-    // Keluar, otomatis buat dapur sendiri lagi?
-    // Sesuai requirement, user hanya boleh join 1 household. Kalau keluar, harus dikembalikan ke dapur sendiri agar sistem berjalan.
-    await query(`DELETE FROM household_members WHERE user_id = $1`, [req.user.id])
+    await query(`DELETE FROM household_members WHERE user_id = $1 AND household_id = $2`, [req.user.id, req.user.householdId])
     
-    // Buat ulang dapur default
-    const inviteCode = crypto.randomBytes(4).toString('hex')
-    const hhRes = await query(
-      `INSERT INTO households (name, owner_id, invite_code) VALUES ($1, $2, $3) RETURNING id`,
-      [`Dapur ${req.user.name}`, req.user.id, inviteCode]
-    )
-    const hhId = hhRes.rows[0].id
-
-    await query(
-      `INSERT INTO household_members (household_id, user_id, role) VALUES ($1, $2, 'owner')`,
-      [hhId, req.user.id]
-    )
-
     invalidateUserCache(req.user.id)
     return res.json({ message: 'Berhasil keluar dari dapur.' })
   } catch (err) {

@@ -43,16 +43,35 @@ export async function authenticate(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
     // Cek cache dulu sebelum query DB
-    let user = getCached(decoded.id)
-    if (!user) {
-      user = await queryOne('SELECT * FROM users WHERE id = $1', [decoded.id])
-      if (!user) return res.status(401).json({ message: 'User tidak ditemukan.' })
-      
-      // Ambil household_id dari household_members
-      const membership = await queryOne('SELECT household_id FROM household_members WHERE user_id = $1 LIMIT 1', [user.id])
-      user.householdId = membership ? membership.household_id : null
-      
-      setCache(decoded.id, user)
+    let cachedUser = getCached(decoded.id)
+    if (!cachedUser) {
+      cachedUser = await queryOne('SELECT * FROM users WHERE id = $1', [decoded.id])
+      if (!cachedUser) return res.status(401).json({ message: 'User tidak ditemukan.' })
+      setCache(decoded.id, cachedUser)
+    }
+
+    const user = { ...cachedUser }
+
+    const activeHouseholdId = req.headers['x-household-id']
+    if (activeHouseholdId) {
+      const membership = await queryOne('SELECT household_id FROM household_members WHERE user_id = $1 AND household_id = $2', [user.id, activeHouseholdId])
+      if (membership) {
+        user.householdId = membership.household_id
+      }
+    }
+
+    if (!user.householdId) {
+      const personalHh = await queryOne(
+        `SELECT h.id FROM households h JOIN household_members hm ON h.id = hm.household_id 
+         WHERE hm.user_id = $1 AND h.owner_id = $1 AND h.name = $2 LIMIT 1`, 
+        [user.id, `Dapur ${user.name}`]
+      )
+      if (personalHh) {
+        user.householdId = personalHh.id
+      } else {
+        const anyHh = await queryOne('SELECT household_id FROM household_members WHERE user_id = $1 LIMIT 1', [user.id])
+        user.householdId = anyHh ? anyHh.household_id : null
+      }
     }
 
     req.user = user
