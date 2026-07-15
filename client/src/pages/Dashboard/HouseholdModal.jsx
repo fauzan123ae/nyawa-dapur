@@ -9,6 +9,7 @@ export default function HouseholdModal({ isOpen, onClose, t, isDark, onRefreshDa
   const [data, setData] = useState({ members: [], household: null })
   
   // Forms
+  const [activeTab, setActiveTab] = useState('join') // 'join' or 'create'
   const [inviteCode, setInviteCode] = useState('')
   const [newName, setNewName] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
@@ -122,7 +123,7 @@ export default function HouseholdModal({ isOpen, onClose, t, isDark, onRefreshDa
 
             {isDefaultSolo ? (
               // Tampilan jika masih di dapur mandiri
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-5">
                 <p className={`text-xs ${t.modalSub}`}>Anda saat ini berada di dapur mandiri. Anda dapat mengundang orang lain, bergabung ke dapur lain, atau membuat dapur keluarga baru.</p>
                 
                 {/* Info Dapur Sendiri */}
@@ -136,34 +137,43 @@ export default function HouseholdModal({ isOpen, onClose, t, isDark, onRefreshDa
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
-                  {/* Form Gabung */}
-                  <form onSubmit={handleJoin} className={`p-4 rounded-2xl border ${isDark ? 'border-zinc-700 bg-zinc-800/30' : 'border-gray-200 bg-white'}`}>
-                    <label className={`block font-bold text-xs mb-2 ${t.modalLabel}`}>Gabung Dapur Lain</label>
-                    <div className="flex gap-2">
-                      <input type="text" placeholder="Masukkan Invite Code" value={inviteCode}
-                        onChange={e => setInviteCode(e.target.value)} className={inputClass} required />
-                      <button type="submit" disabled={actionLoading}
-                        className="px-4 py-2 bg-orange-500 hover:bg-orange-400 text-white text-xs font-bold rounded-xl whitespace-nowrap disabled:opacity-50 transition-all">
-                        Gabung
-                      </button>
-                    </div>
-                  </form>
-                  
-                  <div className="text-center text-[10px] font-bold text-gray-400 uppercase">atau</div>
+                <div className="flex flex-col gap-3">
+                  <div className={`flex rounded-xl p-1 gap-1 border ${isDark ? 'bg-zinc-800 border-zinc-700' : 'bg-gray-100 border-gray-200'}`}>
+                    <button onClick={() => { setActiveTab('join'); setErrorMsg('') }}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'join' ? (isDark ? 'bg-orange-600 text-white' : 'bg-orange-500 text-white shadow-sm') : (isDark ? 'text-stone-400' : 'text-gray-500')}`}>
+                      Gabung Dapur
+                    </button>
+                    <button onClick={() => { setActiveTab('create'); setErrorMsg('') }}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'create' ? (isDark ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-white shadow-sm') : (isDark ? 'text-stone-400' : 'text-gray-500')}`}>
+                      Buat Dapur
+                    </button>
+                  </div>
 
-                  {/* Form Buat */}
-                  <form onSubmit={handleCreate} className={`p-4 rounded-2xl border ${isDark ? 'border-zinc-700 bg-zinc-800/30' : 'border-gray-200 bg-white'}`}>
-                    <label className={`block font-bold text-xs mb-2 ${t.modalLabel}`}>Buat Dapur Keluarga Baru</label>
-                    <div className="flex gap-2">
-                      <input type="text" placeholder="Nama Dapur Baru" value={newName}
-                        onChange={e => setNewName(e.target.value)} className={inputClass} required />
-                      <button type="submit" disabled={actionLoading}
-                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-xl whitespace-nowrap disabled:opacity-50 transition-all">
-                        Buat Baru
-                      </button>
-                    </div>
-                  </form>
+                  {activeTab === 'join' ? (
+                    <form onSubmit={handleJoin} className={`p-4 rounded-2xl border mt-2 ${isDark ? 'border-zinc-700 bg-zinc-800/30' : 'border-gray-200 bg-white'}`}>
+                      <label className={`block font-bold text-xs mb-2 ${t.modalLabel}`}>Gabung Dapur Lain</label>
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="Masukkan Invite Code" value={inviteCode}
+                          onChange={e => setInviteCode(e.target.value)} className={inputClass} required />
+                        <button type="submit" disabled={actionLoading}
+                          className="px-4 py-2 bg-orange-500 hover:bg-orange-400 text-white text-xs font-bold rounded-xl whitespace-nowrap disabled:opacity-50 transition-all">
+                          Gabung
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleCreate} className={`p-4 rounded-2xl border mt-2 ${isDark ? 'border-zinc-700 bg-zinc-800/30' : 'border-gray-200 bg-white'}`}>
+                      <label className={`block font-bold text-xs mb-2 ${t.modalLabel}`}>Buat Dapur Keluarga Baru</label>
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="Nama Dapur Baru" value={newName}
+                          onChange={e => setNewName(e.target.value)} className={inputClass} required />
+                        <button type="submit" disabled={actionLoading}
+                          className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-xl whitespace-nowrap disabled:opacity-50 transition-all">
+                          Buat Baru
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               </div>
             ) : (

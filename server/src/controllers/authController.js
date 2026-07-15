@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { query, queryOne } from '../db/index.js'
+import { invalidateUserCache } from '../middleware/auth.js'
 
 const formatUser = (u) => ({
   id:            u.id,
@@ -82,4 +83,50 @@ export async function logout(req, res) {
 
 export async function me(req, res) {
   return res.json(formatUser(req.user))
+}
+
+export async function updateProfile(req, res) {
+  const { name, email } = req.body
+  if (!name || !email) return res.status(422).json({ message: 'Nama dan email wajib diisi.' })
+  
+  try {
+    // Cek apakah email dipakai user lain
+    const existing = await queryOne('SELECT id FROM users WHERE email=$1 AND id != $2', [email, req.user.id])
+    if (existing) return res.status(422).json({ message: 'Email sudah terdaftar di akun lain.' })
+
+    const result = await query(
+      'UPDATE users SET name=$1, email=$2, updated_at=NOW() WHERE id=$3 RETURNING *',
+      [name, email, req.user.id]
+    )
+    
+    invalidateUserCache(req.user.id)
+    const updatedUser = result.rows[0]
+    updatedUser.householdId = req.user.householdId // preserve from req.user
+    
+    return res.json({ message: 'Profil berhasil diperbarui.', user: formatUser(updatedUser) })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+  }
+}
+
+export async function changePassword(req, res) {
+  const { oldPassword, newPassword } = req.body
+  if (!oldPassword || !newPassword) return res.status(422).json({ message: 'Password lama dan baru wajib diisi.' })
+  if (newPassword.length < 8) return res.status(422).json({ message: 'Password baru minimal 8 karakter.' })
+
+  try {
+    const user = await queryOne('SELECT password FROM users WHERE id=$1', [req.user.id])
+    const match = await bcrypt.compare(oldPassword, user.password)
+    
+    if (!match) return res.status(401).json({ message: 'Password lama salah.' })
+
+    const hashed = await bcrypt.hash(newPassword, 12)
+    await query('UPDATE users SET password=$1, updated_at=NOW() WHERE id=$2', [hashed, req.user.id])
+    
+    return res.json({ message: 'Password berhasil diubah.' })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+  }
 }

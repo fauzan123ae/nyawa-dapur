@@ -63,7 +63,7 @@ export async function getMembers(req, res) {
     }
 
     const result = await query(
-      `SELECT u.id, u.name, u.email, hm.role, hm.joined_at 
+      `SELECT u.id, u.name, u.email, u.last_active_at, hm.role, hm.joined_at 
        FROM household_members hm 
        JOIN users u ON u.id = hm.user_id 
        WHERE hm.household_id = $1 

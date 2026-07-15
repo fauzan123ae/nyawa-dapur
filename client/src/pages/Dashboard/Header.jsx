@@ -1,9 +1,12 @@
+import { useNavigate } from 'react-router-dom'
 import { FlameIcon, SunIcon, MoonIcon, MenuIcon, ChevronUpIcon } from './icons'
 
 // =============================================
 // HEADER — sticky top bar
 // =============================================
 export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileMenuOpen, setMobileMenuOpen, toggleTheme, logout, onOpenHousehold }) {
+  const navigate = useNavigate()
+  
   return (
     <header className={`sticky top-0 z-40 backdrop-blur-md border-b px-4 py-3 ${t.header}`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
@@ -37,6 +40,9 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
           <button onClick={onOpenHousehold} className={`px-2.5 py-1 rounded-full border text-xs font-bold flex items-center gap-1 ${t.toggleBtn}`} title="Dapur Keluarga">
             👨‍👩‍👧
           </button>
+          <button onClick={() => navigate('/profile')} className={`px-2.5 py-1 rounded-full border text-xs font-bold transition-all ${t.toggleBtn}`}>
+            Profil
+          </button>
           <button onClick={logout} className={`px-2.5 py-1 rounded-full border text-xs font-semibold transition-all ${t.logoutBtn}`}>Keluar</button>
         </div>
 
@@ -68,6 +74,9 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
               </button>
               <button onClick={() => { onOpenHousehold(); setMobileMenuOpen(false) }} className={`px-3 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 ${t.toggleBtn}`}>
                 👨‍👩‍👧 Dapur
+              </button>
+              <button onClick={() => { navigate('/profile'); setMobileMenuOpen(false) }} className={`px-3 py-1.5 rounded-full border text-xs font-bold transition-all ${t.toggleBtn}`}>
+                Profil
               </button>
               <button onClick={logout} className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${t.logoutBtn}`}>Keluar</button>
             </div>
