@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getDashboard, buyFirewood, igniteWood } from '../../api/dashboard'
 import { addIngredient, updateIngredient, adjustQuantity, cookIngredient, cookAmountIngredient, cookBatchIngredients, wasteIngredient, deleteIngredient } from '../../api/ingredients'
 import { claimQuest } from '../../api/quests'
-import { getCookingHistory } from '../../api/history'
+import { getCookingHistory, deleteHistoryEntry, clearAllHistory } from '../../api/history'
 
 import { themes } from './theme'
 import { FlameIcon } from './icons'
@@ -278,6 +278,40 @@ export default function Dashboard() {
     catch { setIngredients(prev => backup ? [backup, ...prev] : prev); triggerToast('Gagal.', 'error') }
   }
 
+  // ── History ───────────────────────────────
+  const handleDeleteHistory = async (id) => {
+    // Optimistic entry (belum tersimpan di DB) — cukup hapus dari state saja
+    if (String(id).startsWith('temp-')) {
+      setCookingHistory(prev => prev.filter(h => h.id !== id))
+      return
+    }
+    const backup = cookingHistory.find(h => h.id === id)
+    setCookingHistory(prev => prev.filter(h => h.id !== id))
+    try {
+      await deleteHistoryEntry(id)
+      triggerToast('Riwayat masak dihapus.')
+    } catch {
+      setCookingHistory(prev => backup ? [backup, ...prev.filter(h => h.id !== id)] : prev)
+      triggerToast('Gagal menghapus riwayat.', 'error')
+    }
+  }
+
+  const handleClearAllHistory = async () => {
+    if (!window.confirm('Hapus semua riwayat masak? Tindakan ini tidak dapat dibatalkan.')) return
+    const backup = [...cookingHistory]
+    setCookingHistory([])
+    // Jika semua entry adalah optimistic (temp-), tidak perlu hit API
+    const hasRealEntries = backup.some(h => !String(h.id).startsWith('temp-'))
+    if (!hasRealEntries) return
+    try {
+      await clearAllHistory()
+      triggerToast('Semua riwayat masak telah dihapus.')
+    } catch {
+      setCookingHistory(backup)
+      triggerToast('Gagal menghapus semua riwayat.', 'error')
+    }
+  }
+
   // ── Shop & Quests ─────────────────────────
   const handleBuyFirewood = async () => {
     try {
@@ -366,6 +400,8 @@ export default function Dashboard() {
     onOpenCookAmountModal:  handleOpenCookAmount,
     onWaste:                handleWaste,
     onDelete:               handleDelete,
+    onDeleteHistory:        handleDeleteHistory,
+    onClearAllHistory:      handleClearAllHistory,
   }
 
   return (

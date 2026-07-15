@@ -1,10 +1,5 @@
-import { Router } from 'express'
-import { register, login, logout, me } from '../controllers/authController.js'
-import { authenticate } from '../middleware/auth.js'
-
-const router = Router()
-router.post('/register', register)
-router.post('/login',    login)
-router.post('/logout',   authenticate, logout)
-router.get('/me',        authenticate, me)
-export default router
+import client from './client'
+export const login    = (data) => client.post('/auth/login', data)
+export const register = (data) => client.post('/auth/register', data)
+export const logout   = ()     => client.post('/auth/logout')
+export const getMe    = ()     => client.get('/auth/me')

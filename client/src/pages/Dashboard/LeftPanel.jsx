@@ -21,6 +21,8 @@ export default function LeftPanel({
   onOpenCookAmountModal,
   onWaste,
   onDelete,
+  onDeleteHistory,
+  onClearAllHistory,
 }) {
   const statMap  = { Segar: t.statSegar, Waspada: t.statWaspada, Kritis: t.statKritis, Busuk: t.statBusuk }
   const countMap = { Segar: pantryStats.segar, Waspada: pantryStats.layu, Kritis: pantryStats.sekarat, Busuk: pantryStats.busuk }
@@ -111,6 +113,20 @@ export default function LeftPanel({
       {/* RIWAYAT MASAK */}
       {activeFilter === 'Riwayat' && (
         <div className="flex flex-col gap-3">
+          {cookingHistory.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                onClick={onClearAllHistory}
+                className={`px-3 py-1.5 text-[11px] font-bold rounded-xl border transition-all active:scale-95 ${
+                  isDark
+                    ? 'bg-red-950/40 border-red-800/50 text-red-400 hover:bg-red-950/70'
+                    : 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100'
+                }`}
+              >
+                🗑️ Hapus Semua
+              </button>
+            </div>
+          )}
           {cookingHistory.length === 0 ? (
             <div className={`border border-dashed rounded-2xl p-8 text-center flex flex-col items-center gap-3 ${t.emptyBox}`}>
               <span className="text-4xl">🍳</span>
@@ -125,13 +141,28 @@ export default function LeftPanel({
                   <p className={`text-xs ${isDark ? 'text-stone-400' : 'text-gray-500'}`}>{parseFloat(h.quantity)} {h.unit} dimasak</p>
                 </div>
               </div>
-              <div className="text-right shrink-0">
-                <p className={`text-[11px] font-bold ${isDark ? 'text-lime-400' : 'text-green-600'}`}>+{h.xp_earned} XP</p>
-                <p className={`text-[10px] font-mono ${isDark ? 'text-stone-500' : 'text-gray-400'}`}>
-                  {new Date(h.cooked_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' })}
-                  {' '}
-                  {new Date(h.cooked_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}
-                </p>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-right">
+                  <p className={`text-[11px] font-bold ${isDark ? 'text-lime-400' : 'text-green-600'}`}>+{h.xp_earned} XP</p>
+                  <p className={`text-[10px] font-mono ${isDark ? 'text-stone-500' : 'text-gray-400'}`}>
+                    {new Date(h.cooked_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' })}
+                    {' '}
+                    {new Date(h.cooked_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onDeleteHistory(h.id)}
+                  title="Hapus riwayat ini"
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90 shrink-0 ${
+                    isDark
+                      ? 'text-stone-500 hover:text-red-400 hover:bg-red-950/40'
+                      : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
           ))}

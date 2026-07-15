@@ -72,20 +72,25 @@ export async function nextDay(req, res) {
   const current = getSimulatedNow(user.id)
   const next    = current.add(1, 'day')
 
+  // Hitung streak SEBELUM maju hari:
+  // Jika last_active_at ada di hari "current" (hari yang sedang berjalan),
+  // artinya user aktif hari ini → streak naik.
+  // Jika tidak aktif hari ini → streak reset 0.
+  const wasActiveToday = user.last_active_at
+    ? dayjs(user.last_active_at).isSame(current, 'day')
+    : false
+
+  const newStreak = wasActiveToday ? user.current_streak + 1 : 0
+
+  // Maju ke hari berikutnya (hanya di memory simulasi)
   setSimulatedDate(user.id, next.toISOString())
 
-  let newStreak = user.current_streak
-  if (user.last_active_at) {
-    newStreak = dayjs(user.last_active_at).isSame(current, 'day')
-      ? user.current_streak + 1
-      : 0
-  } else {
-    newStreak = 0
-  }
-
+  // Hanya update current_streak — JANGAN sentuh last_active_at.
+  // last_active_at hanya boleh diubah oleh aksi user yang nyata
+  // (masak atau igniteWood), bukan oleh pergantian hari simulasi.
   await query(
-    'UPDATE users SET current_streak=$1,last_active_at=$2,updated_at=NOW() WHERE id=$3',
-    [newStreak, current.toISOString(), user.id]
+    'UPDATE users SET current_streak=$1, updated_at=NOW() WHERE id=$2',
+    [newStreak, user.id]
   )
   invalidateUserCache(user.id)
   return res.json({ message: 'Waktu maju +1 hari.', simulatedDate: next.toISOString() })
