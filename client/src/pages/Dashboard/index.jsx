@@ -11,6 +11,7 @@ import Header from './Header'
 import LeftPanel from './LeftPanel'
 import RightPanel from './RightPanel'
 import { ModalAdd, ModalEdit, ModalBatchCook, ModalCookAmount } from './Modals'
+import HouseholdModal from './HouseholdModal'
 import { useIngredientHealth } from './useIngredientHealth'
 
 // ── Helper optimistic update ─────────────────
@@ -55,6 +56,9 @@ export default function Dashboard() {
   const [isAddOpen, setIsAddOpen]       = useState(false)
   const [addForm, setAddForm]           = useState({ name: '', qty: '', unit: 'gram', daysToExpiry: '3' })
   const [isAddSubmitting, setIsAddSubmitting] = useState(false)
+
+  // ── Modal: Household ──────────────────────
+  const [isHouseholdOpen, setIsHouseholdOpen] = useState(false)
 
   // ── Modal: Edit ───────────────────────────
   const [isEditOpen, setIsEditOpen]     = useState(false)
@@ -410,7 +414,7 @@ export default function Dashboard() {
       <Header
         t={t} isDark={isDark} user={user} isFireLit={isFireLit} flameLevel={flameLevel}
         mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen}
-        toggleTheme={toggleTheme} logout={logout}
+        toggleTheme={toggleTheme} logout={logout} onOpenHousehold={() => setIsHouseholdOpen(true)}
       />
 
       {/* MOBILE TAB SWITCHER */}
@@ -461,6 +465,7 @@ export default function Dashboard() {
         calculateIngredientHealth={calculateIngredientHealth} getHealthStatus={getHealthStatus} />
       <ModalCookAmount t={t} isDark={isDark} ingredient={cookAmountIng} value={cookAmountValue} onChange={setCookAmountValue}
         onClose={() => setCookAmountIng(null)} onSubmit={handleConfirmCookAmount} isCooking={isCookingAmount} />
+      <HouseholdModal t={t} isDark={isDark} isOpen={isHouseholdOpen} onClose={() => setIsHouseholdOpen(false)} onRefreshDashboard={fetchDashboard} />
 
       <footer className={`border-t mt-12 py-5 text-center text-xs ${t.footer}`}>
         <p>© 2026 Nyawa Dapur — Eco Gamified Kitchen Productivity.</p>

@@ -70,7 +70,8 @@ export async function getMembers(req, res) {
        ORDER BY hm.joined_at ASC`,
       [req.user.householdId]
     )
-    return res.json(result.rows)
+    const household = await queryOne('SELECT id, name, invite_code, owner_id FROM households WHERE id = $1', [req.user.householdId])
+    return res.json({ members: result.rows, household })
   } catch (err) {
     console.error(err)
     return res.status(500).json({ message: 'Terjadi kesalahan server.' })

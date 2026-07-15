@@ -3,7 +3,7 @@ import { FlameIcon, SunIcon, MoonIcon, MenuIcon, ChevronUpIcon } from './icons'
 // =============================================
 // HEADER — sticky top bar
 // =============================================
-export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileMenuOpen, setMobileMenuOpen, toggleTheme, logout }) {
+export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileMenuOpen, setMobileMenuOpen, toggleTheme, logout, onOpenHousehold }) {
   return (
     <header className={`sticky top-0 z-40 backdrop-blur-md border-b px-4 py-3 ${t.header}`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
@@ -34,6 +34,9 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
           <button onClick={toggleTheme} className={`px-2.5 py-1 rounded-full border text-xs font-bold flex items-center gap-1 ${t.toggleBtn}`}>
             {isDark ? <SunIcon /> : <MoonIcon />}
           </button>
+          <button onClick={onOpenHousehold} className={`px-2.5 py-1 rounded-full border text-xs font-bold flex items-center gap-1 ${t.toggleBtn}`} title="Dapur Keluarga">
+            👨‍👩‍👧
+          </button>
           <button onClick={logout} className={`px-2.5 py-1 rounded-full border text-xs font-semibold transition-all ${t.logoutBtn}`}>Keluar</button>
         </div>
 
@@ -62,6 +65,9 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
             <div className="flex gap-2">
               <button onClick={() => { toggleTheme(); setMobileMenuOpen(false) }} className={`px-3 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 ${t.toggleBtn}`}>
                 {isDark ? <SunIcon /> : <MoonIcon />} {isDark ? 'Terang' : 'Gelap'}
+              </button>
+              <button onClick={() => { onOpenHousehold(); setMobileMenuOpen(false) }} className={`px-3 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 ${t.toggleBtn}`}>
+                👨‍👩‍👧 Dapur
               </button>
               <button onClick={logout} className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${t.logoutBtn}`}>Keluar</button>
             </div>
