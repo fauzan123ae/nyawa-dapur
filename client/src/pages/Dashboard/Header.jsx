@@ -4,7 +4,7 @@ import { FlameIcon, SunIcon, MoonIcon, MenuIcon, ChevronUpIcon } from './icons'
 // =============================================
 // HEADER — sticky top bar
 // =============================================
-export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileMenuOpen, setMobileMenuOpen, toggleTheme, logout, activeHouseholdName }) {
+export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileMenuOpen, setMobileMenuOpen, toggleTheme, logout, activeHouseholdName, realtimeStatus }) {
   const navigate = useNavigate()
   
   return (
@@ -39,6 +39,12 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
           </button>
           <button onClick={() => navigate('/kitchen-select')} className={`px-2.5 py-1 rounded-full border text-xs font-bold flex items-center gap-1.5 ${t.toggleBtn}`} title="Ganti Dapur">
             🏠 <span className="max-w-[100px] truncate">{activeHouseholdName || 'Dapur'}</span>
+            {realtimeStatus && (
+              <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] ${realtimeStatus === 'connected' ? 'bg-green-500/20 text-green-500' : 'bg-stone-500/20 text-stone-500'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${realtimeStatus === 'connected' ? 'bg-green-500' : 'bg-stone-500'}`}></span>
+                {realtimeStatus === 'connected' ? 'Live' : ''}
+              </span>
+            )}
           </button>
           <button onClick={() => navigate('/profile')} className={`px-2.5 py-1 rounded-full border text-xs font-bold transition-all ${t.toggleBtn}`}>
             Profil

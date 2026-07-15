@@ -5,6 +5,7 @@ import { addIngredient, updateIngredient, adjustQuantity, cookIngredient, cookAm
 import { claimQuest } from '../../api/quests'
 import { getCookingHistory, deleteHistoryEntry, clearAllHistory } from '../../api/history'
 import { getMyHouseholds } from '../../api/household'
+import { useIngredientRealtime } from '../../hooks/useIngredientRealtime'
 
 import { themes } from './theme'
 import { FlameIcon } from './icons'
@@ -13,6 +14,17 @@ import LeftPanel from './LeftPanel'
 import RightPanel from './RightPanel'
 import { ModalAdd, ModalEdit, ModalBatchCook, ModalCookAmount } from './Modals'
 import { useIngredientHealth } from './useIngredientHealth'
+
+const formatRow = (r) => ({
+  id:           r.id,
+  name:         r.name,
+  quantity:     parseFloat(r.quantity),
+  unit:         r.unit,
+  purchaseDate: r.purchase_date,
+  expiryDate:   r.expiry_date,
+  status:       r.status,
+  updatedAt:    r.updated_at,
+})
 
 // ── Helper optimistic update ─────────────────
 function applyOptimistic(list, id, patch) {
@@ -77,6 +89,15 @@ export default function Dashboard() {
   // ── Health helpers ────────────────────────
   const { calculateIngredientHealth: calcHealth, getHealthStatus } = useIngredientHealth(t)
   const calculateIngredientHealth = useCallback((ing) => calcHealth(ing, now), [calcHealth, now])
+
+  // ── Realtime ──────────────────────────────
+  const { realtimeStatus } = useIngredientRealtime({
+    householdId: activeHouseholdId,
+    currentUserId: userData?.id,
+    onAdded:   (row) => setIngredients(prev => [formatRow(row), ...prev]),
+    onUpdated: (row) => setIngredients(prev => prev.map(i => i.id === row.id ? { ...i, ...formatRow(row) } : i)),
+    onDeleted: (row) => setIngredients(prev => prev.filter(i => i.id !== row.id)),
+  })
 
   // ── Toast ─────────────────────────────────
   const triggerToast = useCallback((message, type = 'success') => {
@@ -426,6 +447,7 @@ export default function Dashboard() {
         t={t} isDark={isDark} user={user} isFireLit={isFireLit} flameLevel={flameLevel}
         mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen}
         toggleTheme={toggleTheme} logout={logout} activeHouseholdName={activeHouseholdName}
+        realtimeStatus={realtimeStatus}
       />
 
       {/* MOBILE TAB SWITCHER */}
