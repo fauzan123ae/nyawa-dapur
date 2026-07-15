@@ -43,7 +43,7 @@ export default function IngredientCard({
           )}
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-sm sm:text-base flex items-center gap-2 flex-wrap">
-              {isWasted ? '💀' : isDark ? '🔥' : '🌿'}
+              {isWasted ? '💀' : isDark ? '🌿' : '🌿'}
               <span className="truncate">{ing.name}</span>
               {isCooked && <span className={`text-xs px-2 py-0.5 rounded-md font-semibold border shrink-0 ${t.cookedBadge}`}>Selesai Dimasak</span>}
             </h3>
