@@ -101,20 +101,34 @@ const IngredientList = forwardRef(({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
-          {filteredIngredients.map(ing => (
-            <IngredientCard
-              key={ing.id}
-              ing={ing} t={t} isDark={isDark} isCookMode={isCookMode}
-              isSelected={selectedIds.has(ing.id)} isLoading={loadingIds.has(ing.id)}
-              health={calculateIngredientHealth(ing)} healthStatus={getHealthStatus(calculateIngredientHealth(ing))}
-              onToggleSelect={() => onToggleSelectIngredient(ing.id)}
-              onEdit={() => onOpenEditModal(ing)}
-              onAdjust={(dir) => onAdjustQuantity(ing.id, dir)}
-              onCook={() => onOpenCookAmountModal(ing)}
-              onWaste={() => onWaste(ing.id)}
-              onDelete={() => onDelete(ing.id)}
-            />
-          ))}
+          {filteredIngredients.map(ing => {
+            const health    = calculateIngredientHealth(ing)
+            const statusInfo = getHealthStatus(health)
+            const isWasted  = ing.status === 'wasted' || (ing.status === 'active' && health <= 0)
+            const isCooked  = ing.status === 'cooked'
+            return (
+              <IngredientCard
+                key={ing.id}
+                ing={ing}
+                t={t}
+                isDark={isDark}
+                health={health}
+                statusInfo={statusInfo}
+                isWasted={isWasted}
+                isCooked={isCooked}
+                isItemLoading={loadingIds.has(ing.id)}
+                isCookMode={isCookMode}
+                isSelectable={isCookMode && ing.status === 'active' && !isWasted}
+                isSelected={selectedIds.has(ing.id)}
+                onToggleSelect={() => onToggleSelectIngredient(ing.id)}
+                onAdjustQuantity={onAdjustQuantity}
+                onOpenEditModal={onOpenEditModal}
+                onOpenCookAmountModal={onOpenCookAmountModal}
+                onWaste={onWaste}
+                onDelete={onDelete}
+              />
+            )
+          })}
         </div>
       )}
     </div>
