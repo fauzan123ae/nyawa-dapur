@@ -63,7 +63,7 @@ const IngredientList = forwardRef(({
       if (document.visibilityState === 'visible') {
         fetchList(false)
       }
-    }, 2000)
+    }, 1000)
     return () => clearInterval(interval)
   }, [householdId])
 

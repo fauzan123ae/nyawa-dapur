@@ -11,6 +11,6 @@ router.put('/:id',             update)
 router.put('/:id/adjust',      adjust)
 router.post('/:id/cook',       cook)
 router.post('/:id/cook-amount', cookAmount)
-router.post('/:id/waste',      waste)
+router.patch('/:id/waste',      waste)
 router.delete('/:id',          destroy)
 export default router

@@ -238,52 +238,56 @@ export function ModalBatchCook({ t, isDark, isOpen, selectedIds, ingredients, is
 export function ModalCookAmount({ t, isDark, ingredient, value, onChange, onClose, onSubmit, isCooking }) {
   if (!ingredient) return null
   return (
-    <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm ${t.modalOverlay}`}
+    <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity duration-150 ${t.modalOverlay}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className={`relative rounded-t-3xl sm:rounded-3xl w-full sm:max-w-sm p-6 shadow-2xl border ${t.modal}`}>
-        <div className="sm:hidden w-10 h-1 rounded-full bg-gray-300 mx-auto mb-4" />
-        <button onClick={onClose} className={`absolute top-4 right-4 text-lg leading-none ${t.modalClose}`}>✕</button>
-        <h3 className={`text-lg font-black mb-0.5 ${t.modalTitle}`}>🍳 Masak Berapa?</h3>
+      <div className={`relative rounded-t-3xl sm:rounded-3xl w-full sm:max-w-sm p-6 shadow-2xl border animate-[scaleUp_0.15s_ease-out] ${t.modal}`}>
+        <div className="sm:hidden w-12 h-1.5 rounded-full bg-gray-300 dark:bg-zinc-700 mx-auto mb-4" />
+        <button onClick={onClose} className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors ${t.modalClose}`} aria-label="Tutup Modal">
+          <X className="w-4 h-4" />
+        </button>
+        <h3 className={`text-lg font-black mb-0.5 flex items-center gap-1.5 ${t.modalTitle}`}>
+          🍳 Masak Berapa?
+        </h3>
         <p className={`text-xs mb-4 ${t.modalSub}`}>
           Stok <span className="font-bold">{ingredient.name}</span>:{' '}
-          <span className={`font-black ${isDark ? 'text-emerald-400' : 'text-green-600'}`}>
+          <span className={`font-black ${isDark ? 'text-[#7BAE7F]' : 'text-primary'}`}>
             {ingredient.quantity} {ingredient.unit}
           </span>
         </p>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div>
-            <label className={`block text-xs font-bold mb-1 ${t.modalLabel}`}>Jumlah yang dimasak ({ingredient.unit})</label>
+            <label className={`block text-xs font-bold mb-1.5 ${t.modalLabel}`}>Jumlah yang dimasak ({ingredient.unit})</label>
             <input type="number" step="any" min="0.01" max={ingredient.quantity}
               value={value} onChange={e => onChange(e.target.value)}
-              className={`w-full rounded-xl px-4 py-2.5 text-sm border focus:outline-none focus:ring-2 transition-all ${t.modalInput}`}
+              className={`w-full rounded-xl px-4 py-2.5 text-sm border focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${t.modalInput}`}
               autoFocus required />
           </div>
           {value && !isNaN(parseFloat(value)) && parseFloat(value) > 0 && (
-            <div className={`rounded-xl px-4 py-3 flex justify-between items-center border text-xs ${isDark ? 'bg-orange-950/30 border-orange-800/40' : 'bg-orange-50 border-orange-200'}`}>
-              <span className={isDark ? 'text-orange-300' : 'text-orange-700'}>Sisa di kulkas setelah dimasak</span>
-              <span className={`font-black ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
+            <div className={`rounded-xl px-4 py-3 flex justify-between items-center border text-xs ${isDark ? 'bg-[#7BAE7F]/15 border-[#7BAE7F]/30' : 'bg-primary/5 border-primary/20'}`}>
+              <span className={isDark ? 'text-[#7BAE7F]' : 'text-primary'}>Sisa di kulkas setelah dimasak</span>
+              <span className={`font-black ${isDark ? 'text-[#7BAE7F]' : 'text-primary'}`}>
                 {Math.max(0, Math.round((ingredient.quantity - parseFloat(value)) * 100) / 100)} {ingredient.unit}
               </span>
             </div>
           )}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap">
             {[0.25, 0.5, 1].map(frac => {
               const val = Math.round(ingredient.quantity * frac * 100) / 100
               if (val <= 0) return null
               return (
                 <button type="button" key={frac} onClick={() => onChange(String(val))}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all active:scale-95 ${
-                    isDark ? 'bg-zinc-800 border-zinc-600 text-stone-300 hover:border-emerald-600 hover:text-emerald-400' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-700'
+                  className={`px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all duration-200 active:scale-95 ${
+                    isDark ? 'bg-[#222B27] border-[#34413B] text-[#B8C1BA] hover:border-[#7BAE7F] hover:text-[#7BAE7F]' : 'bg-cream border-border text-gray-600 hover:border-accent hover:text-primary'
                   }`}>
                   {frac === 1 ? 'Semua' : frac === 0.5 ? '½' : '¼'} ({val} {ingredient.unit})
                 </button>
               )
             })}
           </div>
-          <div className="flex gap-2.5 mt-1">
-            <button type="button" onClick={onClose} className={`w-1/2 py-3 font-bold rounded-xl text-sm transition-all ${t.modalCancel}`}>Batal</button>
+          <div className="flex gap-2.5 mt-2">
+            <button type="button" onClick={onClose} className={`w-1/2 py-3 font-bold rounded-xl text-sm transition-all duration-200 ${t.modalCancel}`}>Batal</button>
             <button type="submit" disabled={isCooking}
-              className="w-1/2 py-3 font-bold rounded-xl text-sm transition-all active:scale-95 bg-orange-500 hover:bg-orange-400 text-white shadow-sm disabled:opacity-50">
+              className="w-1/2 py-3 font-bold rounded-xl text-sm transition-all duration-200 active:scale-95 bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-accent text-white shadow-sm disabled:opacity-50">
               {isCooking ? 'Memasak...' : '🔥 Masak'}
             </button>
           </div>
@@ -292,3 +296,103 @@ export function ModalCookAmount({ t, isDark, ingredient, value, onChange, onClos
     </div>
   )
 }
+
+// ── Modal Waste Amount ────────────────────────
+export function ModalWasteAmount({ open, ing, t, isDark, onClose, onConfirm }) {
+  const [value, setValue] = useState('')
+  useEffect(() => {
+    if (open && ing) {
+      setValue(String(ing.quantity))
+    } else {
+      setValue('')
+    }
+  }, [open, ing])
+
+  if (!open || !ing) return null
+
+  const handleMinus = () => {
+    const val = parseFloat(value) || 0.1
+    const newVal = Math.max(0.1, Math.round((val - 1) * 100) / 100)
+    setValue(String(newVal))
+  }
+
+  const handlePlus = () => {
+    const val = parseFloat(value) || 0.1
+    const newVal = Math.min(ing.quantity, Math.round((val + 1) * 100) / 100)
+    setValue(String(newVal))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const amount = parseFloat(value)
+    if (isNaN(amount) || amount < 0.1 || amount > ing.quantity) return
+    onConfirm(amount)
+  }
+
+  return (
+    <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity duration-150 ${t.modalOverlay}`}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      <div className={`relative rounded-t-3xl sm:rounded-3xl w-full sm:max-w-sm p-6 shadow-2xl border animate-[scaleUp_0.15s_ease-out] ${t.modal}`}>
+        <div className="sm:hidden w-12 h-1.5 rounded-full bg-gray-300 dark:bg-zinc-700 mx-auto mb-4" />
+        <button onClick={onClose} className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors ${t.modalClose}`} aria-label="Tutup Modal">
+          <X className="w-4 h-4" />
+        </button>
+        <h3 className={`text-lg font-black mb-0.5 flex items-center gap-1.5 ${t.modalTitle}`}>
+          🍄 Berapa yang Busuk?
+        </h3>
+        <p className={`text-xs mb-4 ${t.modalSub}`}>
+          Stok <span className="font-bold">{ing.name}</span>:{' '}
+          <span className="font-black text-danger">
+            {ing.quantity} {ing.unit}
+          </span>
+        </p>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className={`block text-xs font-bold mb-1.5 ${t.modalLabel}`}>Jumlah yang rusak ({ing.unit})</label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 flex items-center rounded-2xl bg-[#FFFDF9] dark:bg-[#222B27] border-2 border-border dark:border-[#34413B] overflow-hidden shadow-inner h-11 px-2">
+                <button
+                  type="button"
+                  onClick={handleMinus}
+                  disabled={parseFloat(value) <= 0.1}
+                  className="w-8 h-full flex items-center justify-center transition-colors active:scale-95 text-gray-400 hover:text-danger disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  step="any"
+                  min="0.1"
+                  max={ing.quantity}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  className="w-full text-center text-sm font-mono font-bold focus:outline-none bg-transparent text-gray-800 dark:text-stone-200"
+                  required
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={handlePlus}
+                  disabled={parseFloat(value) >= ing.quantity}
+                  className="w-8 h-full flex items-center justify-center transition-colors active:scale-95 text-gray-400 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  +
+                </button>
+              </div>
+              <span className="text-xs font-bold text-muted">{ing.unit}</span>
+            </div>
+          </div>
+
+          <div className="flex gap-2.5 mt-2">
+            <button type="button" onClick={onClose} className={`w-1/2 py-3 font-bold rounded-xl text-sm transition-all duration-200 ${t.modalCancel}`}>Batal</button>
+            <button type="submit"
+              className="w-1/2 py-3 font-bold rounded-xl text-sm transition-all duration-200 active:scale-95 bg-danger hover:bg-danger/80 text-white shadow-md cursor-pointer">
+              🍄 Tandai Busuk
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+

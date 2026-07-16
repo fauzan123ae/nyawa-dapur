@@ -6,5 +6,5 @@ export const adjustQuantity       = (id, dir)       => client.put(`/ingredients/
 export const cookIngredient       = (id)            => client.post(`/ingredients/${id}/cook`)
 export const cookAmountIngredient = (id, amount)    => client.post(`/ingredients/${id}/cook-amount`, { amount })
 export const cookBatchIngredients = (items)         => client.post('/ingredients/cook-batch', { items })
-export const wasteIngredient      = (id)            => client.post(`/ingredients/${id}/waste`)
+export const wasteIngredient      = (id, amount)    => client.patch(`/ingredients/${id}/waste`, { amount })
 export const deleteIngredient     = (id)            => client.delete(`/ingredients/${id}`)

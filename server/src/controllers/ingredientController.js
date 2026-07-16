@@ -147,11 +147,23 @@ export async function cookAmount(req, res) {
 }
 
 export async function waste(req, res) {
-  const ing = await ownerCheck(req.params.id, req.user, res)
-  if (!ing) return
+  const { amount } = req.body
+  // fetch ingredient, validate ownership via household
+  const { rows } = await query('SELECT * FROM ingredients WHERE id=$1', [req.params.id])
+  const ing = rows[0]
+  if (!ing || ing.household_id !== req.user.householdId) return res.status(403).json({ error: 'Forbidden' })
+  if (!amount || amount <= 0 || amount > ing.quantity) return res.status(400).json({ error: 'Invalid amount' })
 
-  await query("UPDATE ingredients SET status='wasted',updated_at=NOW() WHERE id=$1", [ing.id])
-  return res.json({ message: 'Bahan ditandai wasted.' })
+  const isFullWaste = amount >= ing.quantity
+  await query(
+    `UPDATE ingredients SET 
+      status = $1,
+      quantity = $2,
+      updated_at = NOW()
+    WHERE id = $3`,
+    [isFullWaste ? 'wasted' : 'active', isFullWaste ? 0 : ing.quantity - amount, ing.id]
+  )
+  return res.json({ message: isFullWaste ? 'Bahan ditandai wasted.' : `${amount} ${ing.unit} dicatat busuk.` })
 }
 
 export async function destroy(req, res) {

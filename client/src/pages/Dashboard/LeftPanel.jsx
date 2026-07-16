@@ -1,5 +1,6 @@
 import { PlusIcon } from './icons'
 import IngredientCard from './IngredientCard'
+import { Leaf, AlertTriangle, AlertCircle, Skull, Trash2, CheckSquare, Utensils, Flame, X, Clock } from 'lucide-react'
 
 const formatDate = (dateStr) => {
   const d = new Date(dateStr)
@@ -39,66 +40,78 @@ export default function LeftPanel({
 }) {
   const statMap  = { Segar: t.statSegar, Waspada: t.statWaspada, Kritis: t.statKritis, Busuk: t.statBusuk }
   const countMap = { Segar: pantryStats.segar, Waspada: pantryStats.layu, Kritis: pantryStats.sekarat, Busuk: pantryStats.busuk }
-  const emojis   = { Segar: isDark ? '🌿' : '🌿', Waspada: '⚠️', Kritis: '🚨', Busuk: '💀' }
+  const icons    = { 
+    Segar: <span className="text-lg animate-sway">🌿</span>, 
+    Waspada: <span className="text-lg animate-bounce-cute">🥕</span>, 
+    Kritis: <span className="text-lg animate-pulse">🍅</span>, 
+    Busuk: <span className="text-lg">🍄</span> 
+  }
 
   return (
-    <section className="flex flex-col gap-4 sm:gap-6">
+    <section className="flex flex-col gap-4 sm:gap-6 relative">
+      
+      {/* Decorative tiny bee floating */}
+      <div className="absolute -top-6 right-2 text-sm select-none pointer-events-none animate-float-slow hidden md:block">
+        🐝 <span className="text-[10px] text-muted font-bold bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-border dark:border-[#34413B]">bzz...</span>
+      </div>
 
       {/* STAT CARDS */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {['Segar','Waspada','Kritis','Busuk'].map(filter => (
           <button key={filter} onClick={() => setActiveFilter(filter)}
-            className={`p-3 sm:p-4 rounded-2xl border text-left transition-all duration-200 active:scale-95 ${activeFilter === filter ? statMap[filter].on : statMap[filter].off}`}>
+            className={`p-3.5 sm:p-4 rounded-[2rem] border-2 text-left transition-all duration-350 btn-squish focus:outline-none ${activeFilter === filter ? statMap[filter].on : statMap[filter].off}`}>
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-bold opacity-70">{filter}</span>
-              <span className="text-sm sm:text-base">{emojis[filter]}</span>
+              <span className="text-xs font-black opacity-80 tracking-tight">{filter}</span>
+              <span>{icons[filter]}</span>
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-xl sm:text-2xl font-black">{countMap[filter]}</span>
-              <span className="text-[10px] opacity-50">item</span>
+              <span className="text-[10px] opacity-60 font-extrabold">bahan</span>
             </div>
           </button>
         ))}
       </div>
 
       {/* SECTION HEADER */}
-      <div className={`rounded-2xl p-4 sm:p-5 border flex flex-col gap-3 ${t.sectionCard}`}>
+      <div className={`p-5 border-2 flex flex-col gap-3.5 ${t.sectionCard}`}>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h2 className={`text-base sm:text-lg font-black flex items-center gap-2 ${t.sectionTitle}`}>🍃 Inventaris Hijau Dapur</h2>
-            <p className={`text-xs mt-0.5 ${t.sectionSub}`}>Pertahankan ekosistem bahan pangan bebas food-waste</p>
+            <h2 className={`text-base sm:text-lg font-black flex items-center gap-1.5 ${t.sectionTitle}`}>
+              <span className="animate-sway">🍃</span> Inventaris Hijau Dapur
+            </h2>
+            <p className={`text-xs mt-0.5 font-bold ${t.sectionSub}`}>Rawat ekosistem pangan keluarga bebas food-waste 💚</p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             {!isCookMode ? (
               <>
                 <button onClick={onToggleCookMode}
-                  className={`flex items-center gap-1.5 px-3 py-2 font-bold rounded-xl transition-all text-xs flex-1 sm:flex-none justify-center active:scale-95 border ${
-                    isDark ? 'bg-orange-950/40 border-orange-700/50 text-orange-400 hover:bg-orange-950/60' : 'bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100'
+                  className={`flex items-center gap-1.5 px-4 py-2.5 font-extrabold rounded-xl transition-all duration-200 text-xs flex-1 sm:flex-none justify-center btn-squish border-2 focus:outline-none ${
+                    isDark ? 'bg-[#7BAE7F]/20 border-[#7BAE7F]/40 text-[#7BAE7F]' : 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
                   }`}>
-                  🍳 Mulai Masak
+                  <Utensils className="w-3.5 h-3.5" /> Mulai Masak 🍳
                 </button>
                 <button onClick={onOpenAddModal}
-                  className={`flex items-center gap-1.5 px-3 py-2 font-bold rounded-xl transition-all text-xs flex-1 sm:flex-none justify-center active:scale-95 ${t.addBtn}`}>
+                  className={`flex items-center gap-1.5 px-4 py-2.5 font-extrabold rounded-xl transition-all duration-200 text-xs flex-1 sm:flex-none justify-center btn-squish focus:outline-none ${t.addBtn}`}>
                   <PlusIcon /> Tambah
                 </button>
               </>
             ) : (
               <>
                 <button onClick={onSelectAllActive}
-                  className={`flex items-center gap-1.5 px-3 py-2 font-bold rounded-xl text-xs flex-1 justify-center border transition-all active:scale-95 ${
-                    isDark ? 'bg-zinc-700 border-zinc-600 text-stone-300 hover:bg-zinc-600' : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'
+                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center border-2 transition-all duration-200 btn-squish focus:outline-none ${
+                    isDark ? 'bg-zinc-800 border-[#34413B] text-stone-300' : 'bg-[#F8F7F2] border-border text-[#1F2937] hover:bg-[#E5E7EB]'
                   }`}>
-                  ☑️ Pilih Semua
+                  <CheckSquare className="w-3.5 h-3.5" /> Pilih Semua
                 </button>
                 <button onClick={onOpenCookModal} disabled={selectedIds.size === 0}
-                  className={`flex items-center gap-1.5 px-3 py-2 font-bold rounded-xl text-xs flex-1 justify-center transition-all active:scale-95 ${
-                    selectedIds.size > 0 ? 'bg-orange-500 hover:bg-orange-400 text-white shadow-sm' : isDark ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center transition-all duration-200 btn-squish focus:outline-none ${
+                    selectedIds.size > 0 ? 'bg-gradient-to-r from-secondary to-accent text-white shadow-sm' : isDark ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border-2 border-transparent' : 'bg-[#E5E7EB] text-[#6B7280] cursor-not-allowed border-2 border-transparent'
                   }`}>
-                  🔥 Masak ({selectedIds.size})
+                  <Flame className="w-3.5 h-3.5" /> Masak ({selectedIds.size})
                 </button>
                 <button onClick={onToggleCookMode}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isDark ? 'bg-zinc-800 border-zinc-700 text-stone-400 hover:text-stone-200' : 'bg-white border-gray-200 text-gray-500 hover:text-gray-700'}`}>
-                  ✕
+                  className={`px-3 py-2.5 rounded-xl text-xs font-bold border-2 transition-all duration-200 btn-squish focus:outline-none ${isDark ? 'bg-zinc-800 border-[#34413B] text-stone-400' : 'bg-white border-border text-[#6B7280]'}`} aria-label="Tutup Mode Masak">
+                  <X className="w-4 h-4" />
                 </button>
               </>
             )}
@@ -106,18 +119,18 @@ export default function LeftPanel({
         </div>
 
         {isCookMode && (
-          <div className={`rounded-xl px-4 py-2.5 text-xs font-semibold flex items-center gap-2 border ${isDark ? 'bg-orange-950/30 border-orange-800/40 text-orange-300' : 'bg-orange-50 border-orange-200 text-orange-700'}`}>
-            <span className="text-base">🍳</span>
+          <div className={`rounded-2xl px-4 py-3 text-xs font-extrabold flex items-center gap-2 border-2 ${isDark ? 'bg-[#7BAE7F]/10 border-[#7BAE7F]/20 text-[#7BAE7F]' : 'bg-primary/10 border-primary/20 text-primary animate-pulse'}`}>
+            <Utensils className="w-4 h-4" />
             <span>Mode Masak aktif — centang bahan yang ingin dimasak, lalu tekan <strong>Masak ({selectedIds.size})</strong></span>
           </div>
         )}
       </div>
 
       {/* FILTER TABS */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-hide">
         {['Semua','Segar','Waspada','Kritis','Busuk','Riwayat'].map(filter => (
           <button key={filter} onClick={() => setActiveFilter(filter)}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 active:scale-95 ${activeFilter === filter ? t.filterActive : t.filterIdle}`}>
+            className={`px-4 sm:px-5 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all duration-200 btn-squish focus:outline-none ${activeFilter === filter ? t.filterActive : t.filterIdle}`}>
             {filter}
           </button>
         ))}
@@ -130,60 +143,65 @@ export default function LeftPanel({
             <div className="flex justify-end">
               <button
                 onClick={onClearAllHistory}
-                className={`px-3 py-1.5 text-[11px] font-bold rounded-xl border transition-all active:scale-95 ${
+                className={`flex items-center gap-1.5 px-4 py-2 text-xs font-extrabold rounded-full border-2 transition-all duration-200 btn-squish focus:outline-none ${
                   isDark
                     ? 'bg-red-950/40 border-red-800/50 text-red-400 hover:bg-red-950/70'
-                    : 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100'
+                    : 'bg-danger/10 border-danger/20 text-danger hover:bg-danger/20'
                 }`}
               >
-                🗑️ Hapus Semua
+                <Trash2 className="w-3.5 h-3.5" /> Hapus Semua
               </button>
             </div>
           )}
           {cookingHistory.length === 0 ? (
-            <div className={`border border-dashed rounded-2xl p-8 text-center flex flex-col items-center gap-3 ${t.emptyBox}`}>
-              <span className="text-4xl">🍳</span>
-              <p className="text-sm">Belum ada riwayat masak.</p>
+            <div className={`border-2 border-dashed rounded-3xl p-10 text-center flex flex-col items-center gap-4 ${t.emptyBox}`}>
+              <div className="relative">
+                <span className="text-4xl animate-sway block">🍳</span>
+                <span className="absolute top-0 right-0 text-xs animate-steam">💨</span>
+              </div>
+              <p className="text-xs font-black opacity-80">Belum ada riwayat masak yang ceria.</p>
             </div>
           ) : cookingHistory.map(h => {
             const isOwn = h.cooked_by === user?.name
             const chefName = isOwn ? 'Kamu' : (h.cooked_by || 'Seseorang')
             return (
-              <div key={h.id} className={`rounded-2xl px-5 py-4 border flex items-center justify-between gap-4 ${t.ingCard}`}>
+              <div key={h.id} className={`rounded-3xl px-5 py-4 border-2 flex items-center justify-between gap-4 ${t.ingCard}`}>
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${isDark ? 'bg-orange-950/50' : 'bg-orange-50'}`}>🔥</div>
+                  <div className="relative w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-accent/20 text-secondary border border-accent/30">
+                    <span className="text-lg">🍲</span>
+                    <span className="absolute -top-1 -right-1 text-[8px] animate-steam">💨</span>
+                  </div>
                   <div className="min-w-0">
-                    <p className={`font-bold text-sm truncate ${isDark ? 'text-stone-100' : 'text-gray-800'}`}>{h.ingredient_name}</p>
-                    <p className={`text-xs ${isDark ? 'text-stone-400' : 'text-gray-500'} flex items-center gap-1.5 mt-0.5 flex-wrap`}>
-                      <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                    <p className={`font-black text-sm truncate ${isDark ? 'text-stone-100' : 'text-gray-800'}`}>{h.ingredient_name}</p>
+                    <p className={`text-xs ${isDark ? 'text-stone-400' : 'text-[#6B7280]'} flex items-center gap-1.5 mt-0.5 flex-wrap font-bold`}>
+                      <span className="flex items-center gap-1 text-primary">
                         👤 {chefName}
                       </span>
                       <span className="opacity-40">•</span>
                       <span>{parseFloat(h.quantity)} {h.unit}</span>
                     </p>
-                    <p className={`text-[10px] font-mono mt-1 ${isDark ? 'text-stone-500' : 'text-gray-400'}`}>
-                      {formatDate(h.cooked_at)}
+                    <p className={`text-[10px] flex items-center gap-1 font-mono font-bold mt-1 ${isDark ? 'text-stone-500' : 'text-[#6B7280]'}`}>
+                      <Clock className="w-3 h-3 text-secondary" /> {formatDate(h.cooked_at)}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-extrabold border ${
-                    isDark ? 'bg-emerald-950/40 border-emerald-800/40 text-lime-400' : 'bg-green-50 border-green-200 text-green-700'
+                  <span className={`px-3 py-1 rounded-full text-xs font-black border-2 ${
+                    isDark ? 'bg-emerald-950/40 border-emerald-800/40 text-lime-400' : 'bg-success/10 border-success/20 text-success'
                   }`}>
-                    +{h.xp_earned} XP
+                    +{h.xp_earned} XP 🎉
                   </span>
                   <button
                     onClick={() => onDeleteHistory(h.id)}
                     title="Hapus riwayat ini"
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90 shrink-0 ${
+                    aria-label="Hapus riwayat ini"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-transparent transition-all duration-200 active:scale-90 shrink-0 focus:outline-none ${
                       isDark
                         ? 'text-stone-500 hover:text-red-400 hover:bg-red-950/40'
-                        : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                        : 'text-[#6B7280] hover:text-danger hover:bg-danger/10 hover:border-danger/20'
                     }`}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>

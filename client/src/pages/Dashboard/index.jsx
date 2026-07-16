@@ -12,7 +12,7 @@ import { FlameIcon } from './icons'
 import Header from './Header'
 import LeftPanel from './LeftPanel'
 import RightPanel from './RightPanel'
-import { ModalAdd, ModalEdit, ModalBatchCook, ModalCookAmount } from './Modals'
+import { ModalAdd, ModalEdit, ModalBatchCook, ModalCookAmount, ModalWasteAmount } from './Modals'
 import { useIngredientHealth } from './useIngredientHealth'
 import IngredientList from './IngredientList'
 
@@ -93,6 +93,9 @@ export default function Dashboard() {
   const [cookAmountIng, setCookAmountIng]     = useState(null)
   const [cookAmountValue, setCookAmountValue] = useState('')
   const [isCookingAmount, setIsCookingAmount] = useState(false)
+
+  // ── Modal: Waste Amount ───────────────────
+  const [wasteModal, setWasteModal] = useState({ open: false, ing: null })
 
   // ── Health helpers ────────────────────────
   const { calculateIngredientHealth: calcHealth, getHealthStatus } = useIngredientHealth(t)
@@ -323,20 +326,28 @@ export default function Dashboard() {
   }
 
   // ── Waste & Delete ────────────────────────
-  const handleWaste = async (id) => {
-    if (!window.confirm('Tandai bahan ini telah membusuk dan dibuang?')) return
-    if (loadingIds.has(id)) return
-    setLoading(id, true)
-    setIngredients(prev => applyOptimistic(prev, id, { status: 'wasted' }))
+  const handleWaste = (id) => {
+    const ing = ingredientListRef.current?.ingredients?.find(i => i.id === id)
+    if (!ing) return
+    setWasteModal({ open: true, ing })
+  }
+
+  const handleConfirmWaste = async (amount) => {
+    const { ing } = wasteModal
+    setWasteModal({ open: false, ing: null })
     try {
-      await wasteIngredient(id)
+      await wasteIngredient(ing.id, amount)
       ingredientListRef.current?.refresh()
-      triggerToast('Bahan dicatat sebagai wasted.', 'error')
-    } catch { 
-      setIngredients(prev => applyOptimistic(prev, id, { status: 'active' })); 
-      triggerToast('Gagal.', 'error') 
+      const isFullWaste = amount >= ing.quantity
+      triggerToast(
+        isFullWaste
+          ? 'Bahan dicatat sebagai busuk.'
+          : `${amount} ${ing.unit} dicatat busuk.`,
+        'error'
+      )
+    } catch {
+      triggerToast('Gagal menandai busuk.', 'error')
     }
-    finally { setLoading(id, false) }
   }
 
   const handleAdjustQuantity = async (id, direction) => {
@@ -540,6 +551,8 @@ export default function Dashboard() {
         calculateIngredientHealth={calculateIngredientHealth} getHealthStatus={getHealthStatus} />
       <ModalCookAmount t={t} isDark={isDark} ingredient={cookAmountIng} value={cookAmountValue} onChange={setCookAmountValue}
         onClose={() => setCookAmountIng(null)} onSubmit={handleConfirmCookAmount} isCooking={isCookingAmount} />
+      <ModalWasteAmount open={wasteModal.open} ing={wasteModal.ing} t={t} isDark={isDark}
+        onClose={() => setWasteModal({ open: false, ing: null })} onConfirm={handleConfirmWaste} />
 
       <footer className={`border-t mt-12 py-5 text-center text-xs ${t.footer}`}>
         <p>© 2026 Nyawa Dapur — Eco Gamified Kitchen Productivity.</p>
