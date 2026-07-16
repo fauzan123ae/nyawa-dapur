@@ -6,7 +6,7 @@ export function useHistoryRealtime({ currentUserId, onHistoryAdded }) {
     if (!currentUserId) return
 
     const channel = supabase
-      .channel(`cooking-history-${currentUserId}`)
+      .channel(`cooking-history-user-${currentUserId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'cooking_history' },
