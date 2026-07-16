@@ -24,7 +24,7 @@ const ownerCheck = async (id, reqUser, res) => {
 export async function index(req, res) {
   const result = await query(
     `SELECT * FROM ingredients WHERE household_id = $1 ORDER BY id DESC`,
-    [req.householdId]
+    [req.user.householdId]
   )
   return res.json(result.rows.map(format))
 }
