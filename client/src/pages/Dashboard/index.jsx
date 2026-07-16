@@ -4,6 +4,7 @@ import { getDashboard, buyFirewood, igniteWood } from '../../api/dashboard'
 import { addIngredient, updateIngredient, adjustQuantity, cookIngredient, cookAmountIngredient, cookBatchIngredients, wasteIngredient, deleteIngredient } from '../../api/ingredients'
 import { claimQuest } from '../../api/quests'
 import { getCookingHistory, deleteHistoryEntry, clearAllHistory } from '../../api/history'
+import { getWasteHistory, deleteWasteEntry } from '../../api/wasteHistory'
 import { getMyHouseholds } from '../../api/household'
 import { useHistoryRealtime } from '../../hooks/useHistoryRealtime'
 
@@ -27,7 +28,10 @@ const formatRow = (r) => ({
   updatedAt:    r.updated_at,
 })
 
-
+// ── Helper optimistic update ─────────────────
+function applyOptimistic(list, id, patch) {
+  return list.map(i => i.id === id ? { ...i, ...patch } : i)
+}
 
 // =============================================
 // DASHBOARD — orchestrator (state + handlers)
@@ -50,6 +54,7 @@ export default function Dashboard() {
   const [userData, setUserData]         = useState(null)
   const [quests, setQuests]             = useState([])
   const [cookingHistory, setCookingHistory] = useState([])
+  const [wasteHistory, setWasteHistory]     = useState([])
   const [pantryStats, setPantryStats]   = useState({ segar: 0, layu: 0, sekarat: 0, busuk: 0 })
   const [now, setNow]                   = useState(new Date().toISOString())
   const [pageLoading, setPageLoading]   = useState(true)
@@ -57,7 +62,9 @@ export default function Dashboard() {
   // ── UI state ──────────────────────────────
   const [activeFilter, setActiveFilter] = useState('Semua')
   const ingredientListRef = useRef(null)
-
+  const setIngredients = useCallback((updater) => {
+    ingredientListRef.current?.setIngredients(updater)
+  }, [])
   const handleDataLoaded = useCallback((data, stats) => {
     setPantryStats(stats || { segar: 0, layu: 0, sekarat: 0, busuk: 0 })
   }, [])
@@ -124,10 +131,11 @@ export default function Dashboard() {
   // ── Fetch ─────────────────────────────────
   const fetchDashboard = useCallback(async () => {
     try {
-      const [res, histRes] = await Promise.all([getDashboard(), getCookingHistory()])
+      const [res, histRes, wasteRes] = await Promise.all([getDashboard(), getCookingHistory(), getWasteHistory()])
       setUserData(res.data.userData)
       setQuests(res.data.questsData)
       setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
+      setWasteHistory(Array.isArray(wasteRes.data) ? wasteRes.data : [])
     } catch (err) {
       console.error('Gagal fetch dashboard:', err)
     } finally {
@@ -160,8 +168,9 @@ export default function Dashboard() {
     const interval = setInterval(async () => {
       if (document.visibilityState !== 'visible') return
       try {
-        const histRes = await getCookingHistory()
+        const [histRes, wasteRes] = await Promise.all([getCookingHistory(), getWasteHistory()])
         setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
+        setWasteHistory(Array.isArray(wasteRes.data) ? wasteRes.data : [])
       } catch {}
     }, 2000)
     return () => clearInterval(interval)
@@ -171,6 +180,11 @@ export default function Dashboard() {
   const handleAdd = async (e) => {
     e.preventDefault()
     setIsAddSubmitting(true)
+    const tempId = `temp-${Date.now()}`
+    const now_   = new Date().toISOString()
+    const expiry = new Date(Date.now() + parseInt(addForm.daysToExpiry) * 86400000).toISOString()
+    const tempIng = { id: tempId, name: addForm.name, quantity: parseFloat(addForm.qty), unit: addForm.unit, purchaseDate: now_, expiryDate: expiry, status: 'active' }
+    setIngredients(prev => [tempIng, ...prev])
     setIsAddOpen(false)
     triggerToast('Bahan masakan tersimpan!')
     const saved = { ...addForm }
@@ -182,6 +196,7 @@ export default function Dashboard() {
       setQuests(res.data.questsData)
       ingredientListRef.current?.refresh()
     } catch (err) {
+      setIngredients(prev => prev.filter(i => i.id !== tempId))
       triggerToast(err.response?.data?.message || 'Gagal menambah bahan.', 'error')
     } finally {
       setIsAddSubmitting(false)
@@ -202,12 +217,15 @@ export default function Dashboard() {
   const handleSaveEdit = async (e) => {
     e.preventDefault()
     setIsEditSubmitting(true)
+    const old = editingIng
+    setIngredients(prev => applyOptimistic(prev, old.id, { name: editForm.name, quantity: parseFloat(editForm.qty), unit: editForm.unit }))
     setIsEditOpen(false); setEditingIng(null)
     triggerToast('Log bahan diperbarui.')
     try {
-      await updateIngredient(editingIng.id, { name: editForm.name, quantity: editForm.qty, unit: editForm.unit, days_to_expiry: editForm.daysToExpiry })
+      await updateIngredient(old.id, { name: editForm.name, quantity: editForm.qty, unit: editForm.unit, days_to_expiry: editForm.daysToExpiry })
       ingredientListRef.current?.refresh()
     } catch (err) {
+      setIngredients(prev => applyOptimistic(prev, old.id, old))
       triggerToast(err.response?.data?.message || 'Gagal update.', 'error')
     } finally {
       setIsEditSubmitting(false)
@@ -232,6 +250,11 @@ export default function Dashboard() {
     setCookAmountIng(null); setCookAmountValue('')
 
     const remaining = Math.round((ing.quantity - amount) * 100) / 100
+    const newStatus = remaining === 0 ? 'cooked' : 'active'
+    const optimisticEntry = { id: `temp-${Date.now()}`, ingredient_id: ing.id, ingredient_name: ing.name, quantity: amount, unit: ing.unit, cooked_at: new Date().toISOString(), xp_earned: 15 }
+
+    setCookingHistory(prev => [optimisticEntry, ...prev])
+    setIngredients(prev => applyOptimistic(prev, ing.id, { quantity: remaining, status: newStatus }))
 
     try {
       await cookAmountIngredient(ing.id, amount)
@@ -242,6 +265,8 @@ export default function Dashboard() {
       if (remaining === 0) setActiveFilter('Riwayat')
       triggerToast(`🔥 ${amount} ${ing.unit} ${ing.name} dimasak! Sisa: ${remaining} ${ing.unit}.`)
     } catch (err) {
+      setCookingHistory(prev => prev.filter(h => h.id !== optimisticEntry.id))
+      setIngredients(prev => applyOptimistic(prev, ing.id, { quantity: ing.quantity, status: ing.status }))
       triggerToast(err.response?.data?.message || 'Gagal memasak.', 'error')
     } finally {
       setIsCookingAmount(false)
@@ -266,6 +291,26 @@ export default function Dashboard() {
   const handleConfirmBatchCook = async (cookAmounts) => {
     const payload = Object.entries(cookAmounts).map(([id, amount]) => ({ id: parseInt(id), amount: parseFloat(amount) }))
     setIsBatchCooking(true)
+    const cookedAt = new Date().toISOString()
+    let backupIngredients = null
+
+    setIngredients(prev => {
+      backupIngredients = prev
+      return prev.map(i => {
+        const match = payload.find(p => p.id === i.id)
+        if (match) {
+          const newQty = Math.max(0, Math.round((i.quantity - match.amount) * 100) / 100)
+          return {
+            ...i,
+            quantity: newQty,
+            status: newQty <= 0 ? 'cooked' : 'active',
+            updatedAt: cookedAt
+          }
+        }
+        return i
+      })
+    })
+
     setIsBatchCookOpen(false); setIsCookMode(false); setSelectedIds(new Set()); setActiveFilter('Riwayat')
     try {
       const res = await cookBatchIngredients(payload)
@@ -275,6 +320,9 @@ export default function Dashboard() {
       setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
       ingredientListRef.current?.refresh()
     } catch (err) {
+      if (backupIngredients) {
+        setIngredients(backupIngredients)
+      }
       triggerToast(err.response?.data?.message || 'Gagal memasak.', 'error')
     } finally {
       setIsBatchCooking(false)
@@ -291,17 +339,19 @@ export default function Dashboard() {
   const handleConfirmWaste = async (amount) => {
     const { ing } = wasteModal
     setWasteModal({ open: false, ing: null })
+    const isFullWaste = amount >= ing.quantity
+    // Optimistic update:
+    setIngredients(prev => applyOptimistic(prev, ing.id, 
+      isFullWaste 
+        ? { status: 'wasted', quantity: 0 }
+        : { quantity: ing.quantity - amount }
+    ))
     try {
       await wasteIngredient(ing.id, amount)
       ingredientListRef.current?.refresh()
-      const isFullWaste = amount >= ing.quantity
-      triggerToast(
-        isFullWaste
-          ? 'Bahan dicatat sebagai busuk.'
-          : `${amount} ${ing.unit} dicatat busuk.`,
-        'error'
-      )
+      triggerToast(isFullWaste ? 'Bahan dicatat sebagai busuk.' : `${amount} ${ing.unit} dicatat busuk.`, 'error')
     } catch {
+      setIngredients(prev => applyOptimistic(prev, ing.id, { status: ing.status, quantity: ing.quantity }))
       triggerToast('Gagal menandai busuk.', 'error')
     }
   }
@@ -310,23 +360,29 @@ export default function Dashboard() {
     const key = `qty-${id}`
     if (loadingIds.has(key)) return
     setLoading(key, true)
-    try {
-      await adjustQuantity(id, direction)
-      ingredientListRef.current?.refresh()
-    } catch {
-      triggerToast('Gagal adjust.', 'error')
-    } finally {
-      setLoading(key, false)
-    }
+    const ingredients = ingredientListRef.current?.ingredients || []
+    const ing = ingredients.find(i => i.id === id)
+    if (!ing) return
+    const stepMap = { kilogram: 0.25, liter: 0.25, gram: 50 }
+    const step = stepMap[ing.unit] ?? 1
+    const newQty = Math.round((direction === 'plus' ? ing.quantity + step : Math.max(0, ing.quantity - step)) * 100) / 100
+    setIngredients(prev => applyOptimistic(prev, id, { quantity: newQty }))
+    try { await adjustQuantity(id, direction) }
+    catch { setIngredients(prev => applyOptimistic(prev, id, { quantity: ing.quantity })); triggerToast('Gagal adjust.', 'error') }
+    finally { setLoading(key, false) }
   }
 
   const handleDelete = async (id) => {
     if (!window.confirm('Hapus log bahan ini secara permanen?')) return
+    const ingredients = ingredientListRef.current?.ingredients || []
+    const backup = ingredients.find(i => i.id === id)
+    setIngredients(prev => prev.filter(i => i.id !== id))
     try {
       await deleteIngredient(id)
       ingredientListRef.current?.refresh()
       triggerToast('Bahan berhasil dihapus dari sistem.')
     } catch {
+      setIngredients(prev => backup ? [backup, ...prev] : prev)
       triggerToast('Gagal.', 'error')
     }
   }
@@ -346,6 +402,18 @@ export default function Dashboard() {
     } catch {
       setCookingHistory(prev => backup ? [backup, ...prev.filter(h => h.id !== id)] : prev)
       triggerToast('Gagal menghapus riwayat.', 'error')
+    }
+  }
+
+  const handleDeleteWasteEntry = async (id) => {
+    const backup = wasteHistory.find(h => h.id === id)
+    setWasteHistory(prev => prev.filter(h => h.id !== id))
+    try {
+      await deleteWasteEntry(id)
+      triggerToast('Riwayat busuk dihapus.')
+    } catch {
+      setWasteHistory(prev => backup ? [backup, ...prev.filter(h => h.id !== id)] : prev)
+      triggerToast('Gagal menghapus.', 'error')
     }
   }
 
@@ -435,6 +503,8 @@ export default function Dashboard() {
     onDelete:               handleDelete,
     onDeleteHistory:        handleDeleteHistory,
     onClearAllHistory:      handleClearAllHistory,
+    wasteHistory,
+    onDeleteWasteEntry:     handleDeleteWasteEntry,
   }
 
   return (
