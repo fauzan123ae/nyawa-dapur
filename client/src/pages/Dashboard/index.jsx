@@ -349,6 +349,8 @@ export default function Dashboard() {
     try {
       await wasteIngredient(ing.id, amount)
       ingredientListRef.current?.refresh()
+      const wasteRes = await getWasteHistory()
+      setWasteHistory(Array.isArray(wasteRes.data) ? wasteRes.data : [])
       triggerToast(isFullWaste ? 'Bahan dicatat sebagai busuk.' : `${amount} ${ing.unit} dicatat busuk.`, 'error')
     } catch {
       setIngredients(prev => applyOptimistic(prev, ing.id, { status: ing.status, quantity: ing.quantity }))
