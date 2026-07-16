@@ -112,6 +112,30 @@ export default function Dashboard() {
     return next
   })
 
+  // ── Realtime ──────────────────────────────
+  useIngredientRealtime({
+    householdId: activeHouseholdId,
+    currentUserId: userData?.id,
+    onAdded: (newIng) => {
+      setIngredients(prev => {
+        if (prev.some(i => i.id === newIng.id)) return prev
+        return [formatRow(newIng), ...prev]
+      })
+    },
+    onUpdated: (updatedIng) => {
+      setIngredients(prev => applyOptimistic(prev, updatedIng.id, formatRow(updatedIng)))
+    },
+    onDeleted: (deletedIng) => {
+      setIngredients(prev => prev.filter(i => i.id !== deletedIng.id))
+    },
+    onHistoryAdded: (row) => {
+      setCookingHistory(prev => {
+        if (prev.some(h => h.id === row.id)) return prev
+        return [{ ...row, cooked_by: row.cooked_by || 'Anggota' }, ...prev]
+      })
+    },
+  })
+
   // ── Fetch ─────────────────────────────────
   const fetchDashboard = useCallback(async () => {
     try {
