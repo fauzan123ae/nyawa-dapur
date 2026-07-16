@@ -255,7 +255,8 @@ export default function LeftPanel({
       )}
 
       {/* INGREDIENT LIST FROM PARENT */}
-      {activeFilter !== 'Riwayat' && activeFilter !== 'Busuk' && children}
+      {/* PERBAIKAN BUG: Tampilkan IngredientList juga saat filter Busuk agar bahan expired (health=0) muncul */}
+      {activeFilter !== 'Riwayat' && children}
     </section>
   )
 }

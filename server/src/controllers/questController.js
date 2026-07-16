@@ -9,7 +9,7 @@ const DEFAULT_QUESTS = [
   { type: 'stale_defense', description: '🪵 Miliki minimal 1 kayu bakar.',                            xp_reward: 15 },
 ]
 
-function checkCanClaim(type, user, now, ingredients) {
+function checkCanClaim(type, user, now, ingredients, cookedTodayCount = 0) {
   const active = ingredients.filter((i) => i.status === 'active')
   const today  = now.format('YYYY-MM-DD')
 
@@ -38,12 +38,9 @@ function checkCanClaim(type, user, now, ingredients) {
       })
 
     case 'cook_saving':
-      // Minimal 1 bahan dimasak HARI INI (updated_at di hari ini dengan status cooked)
-      return ingredients.some((i) => {
-        if (i.status !== 'cooked') return false
-        if (!i.updated_at) return false
-        return dayjs(i.updated_at).format('YYYY-MM-DD') === today
-      })
+      // PERBAIKAN BUG: Gunakan cooking_history untuk deteksi masak hari ini
+      // cookedTodayCount di-query langsung dari tabel cooking_history
+      return cookedTodayCount > 0
 
     case 'clean_pantry': {
       // Tidak ada bahan wasted HARI INI dan tidak ada bahan aktif yang sudah expired
@@ -85,13 +82,20 @@ export async function getOrCreateDailyQuests(user, now, ingredients) {
     )
   }
 
+  // PERBAIKAN BUG: Query cooking_history untuk deteksi masak hari ini yang akurat
+  const cookHistResult = await query(
+    `SELECT COUNT(*) FROM cooking_history WHERE user_id=$1 AND DATE(cooked_at)=$2`,
+    [user.id, today]
+  )
+  const cookedTodayCount = parseInt(cookHistResult.rows[0]?.count ?? 0)
+
   return result.rows.map((q) => ({
     id:          q.id,
     type:        q.type,
     description: q.description,
     xpReward:    q.xp_reward,
     isCompleted: q.is_completed,
-    canClaim:    !q.is_completed && checkCanClaim(q.type, user, now, ingredients),
+    canClaim:    !q.is_completed && checkCanClaim(q.type, user, now, ingredients, cookedTodayCount),
   }))
 }
 
@@ -113,11 +117,18 @@ export async function claimQuest(req, res) {
   if (quest.is_completed)  return res.status(422).json({ message: 'Quest sudah diklaim.' })
 
   // Ambil ingredients dengan updated_at untuk pengecekan akurat
+  // PERBAIKAN BUG: gunakan household_id (sama seperti dashboardController), bukan user_id
   const rows = await query(
-    'SELECT id,name,quantity,unit,purchase_date,expiry_date,status,updated_at FROM ingredients WHERE user_id=$1',
-    [user.id]
+    'SELECT id,name,quantity,unit,purchase_date,expiry_date,status,updated_at FROM ingredients WHERE household_id=$1',
+    [user.householdId]
   )
-  const canClaim = checkCanClaim(type, user, now, rows.rows)
+  // PERBAIKAN BUG: Query cooking_history untuk verifikasi cook_saving yang akurat
+  const cookHistResult = await query(
+    `SELECT COUNT(*) FROM cooking_history WHERE user_id=$1 AND DATE(cooked_at)=$2`,
+    [user.id, today]
+  )
+  const cookedTodayCount = parseInt(cookHistResult.rows[0]?.count ?? 0)
+  const canClaim = checkCanClaim(type, user, now, rows.rows, cookedTodayCount)
   if (!canClaim) return res.status(422).json({ message: 'Kondisi misi belum terpenuhi.' })
 
   await query('UPDATE quests SET is_completed=true,updated_at=NOW() WHERE id=$1', [quest.id])
