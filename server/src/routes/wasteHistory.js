@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { authenticate } from '../middleware/auth.js'
-import { getWasteHistory, deleteWasteHistory } from '../controllers/wasteHistoryController.js'
+import { getWasteHistory, deleteWasteHistory } from '../controllers/Wastehistorycontroller .js'
 
 const router = Router()
 router.get('/',      authenticate, getWasteHistory)
