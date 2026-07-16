@@ -5,7 +5,7 @@ import { addIngredient, updateIngredient, adjustQuantity, cookIngredient, cookAm
 import { claimQuest } from '../../api/quests'
 import { getCookingHistory, deleteHistoryEntry, clearAllHistory } from '../../api/history'
 import { getMyHouseholds } from '../../api/household'
-import { useIngredientRealtime } from '../../hooks/useIngredientRealtime'
+import { useHistoryRealtime } from '../../hooks/useHistoryRealtime'
 
 import { themes } from './theme'
 import { FlameIcon } from './icons'
@@ -113,21 +113,8 @@ export default function Dashboard() {
   })
 
   // ── Realtime ──────────────────────────────
-  useIngredientRealtime({
-    householdId: activeHouseholdId,
+  useHistoryRealtime({
     currentUserId: userData?.id,
-    onAdded: (newIng) => {
-      setIngredients(prev => {
-        if (prev.some(i => i.id === newIng.id)) return prev
-        return [formatRow(newIng), ...prev]
-      })
-    },
-    onUpdated: (updatedIng) => {
-      setIngredients(prev => applyOptimistic(prev, updatedIng.id, formatRow(updatedIng)))
-    },
-    onDeleted: (deletedIng) => {
-      setIngredients(prev => prev.filter(i => i.id !== deletedIng.id))
-    },
     onHistoryAdded: (row) => {
       setCookingHistory(prev => {
         if (prev.some(h => h.id === row.id)) return prev
@@ -505,6 +492,8 @@ export default function Dashboard() {
             <LeftPanel {...sharedPanelProps}>
               <IngredientList
                 ref={ingredientListRef}
+                householdId={activeHouseholdId}
+                currentUserId={userData?.id}
                 t={t} isDark={isDark} activeFilter={activeFilter}
                 isCookMode={isCookMode} selectedIds={selectedIds} loadingIds={loadingIds}
                 calculateIngredientHealth={calculateIngredientHealth} getHealthStatus={getHealthStatus}

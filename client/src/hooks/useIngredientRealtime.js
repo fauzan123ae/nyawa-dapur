@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export function useIngredientRealtime({ householdId, currentUserId, onAdded, onUpdated, onDeleted, onHistoryAdded }) {
+export function useIngredientRealtime({ householdId, currentUserId, onAdded, onUpdated, onDeleted }) {
   const [realtimeStatus, setRealtimeStatus] = useState('disconnected')
 
   useEffect(() => {
@@ -46,21 +46,8 @@ export function useIngredientRealtime({ householdId, currentUserId, onAdded, onU
         }
       })
 
-    const historyChannel = supabase
-      .channel(`household-history-${householdId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'cooking_history' },
-        (payload) => {
-          if (payload.new.user_id === currentUserId) return
-          if (onHistoryAdded) onHistoryAdded(payload.new)
-        }
-      )
-      .subscribe()
-
     return () => { 
       supabase.removeChannel(channel) 
-      supabase.removeChannel(historyChannel)
       setRealtimeStatus('disconnected')
     }
   }, [householdId, currentUserId])

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react'
 import { getIngredients } from '../../api/ingredients'
 import IngredientCard from './IngredientCard'
+import { useIngredientRealtime } from '../../hooks/useIngredientRealtime'
 
 const formatRow = (r) => ({
   id:           r.id,
@@ -19,7 +20,8 @@ const IngredientList = forwardRef(({
   onToggleCookMode, onSelectAllActive, onOpenCookModal,
   onToggleSelectIngredient, onOpenAddModal, onOpenEditModal,
   onAdjustQuantity, onOpenCookAmountModal, onWaste, onDelete,
-  onDataLoaded // callback to pass ingredients & pantryStats to parent if needed
+  onDataLoaded, // callback to pass ingredients & pantryStats to parent if needed
+  householdId, currentUserId
 }, ref) => {
   const [ingredients, setIngredients] = useState([])
   const [loading, setLoading] = useState(true)
@@ -38,17 +40,26 @@ const IngredientList = forwardRef(({
     }
   }
 
+  useIngredientRealtime({
+    householdId,
+    currentUserId,
+    onAdded: (row) => {
+      setIngredients(prev => {
+        if (prev.find(i => i.id === row.id)) return prev
+        return [formatRow(row), ...prev]
+      })
+    },
+    onUpdated: (row) => {
+      setIngredients(prev => prev.map(i => i.id === row.id ? { ...i, ...formatRow(row) } : i))
+    },
+    onDeleted: (row) => {
+      setIngredients(prev => prev.filter(i => i.id !== row.id))
+    },
+  })
+
   useEffect(() => {
     fetchList(true)
-
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchList(false)
-      }
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [])
+  }, [householdId])
 
   useImperativeHandle(ref, () => ({
     refresh: () => fetchList(false),
