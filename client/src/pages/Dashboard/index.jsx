@@ -36,7 +36,7 @@ function applyOptimistic(list, id, patch) {
 // DASHBOARD — orchestrator (state + handlers)
 // =============================================
 export default function Dashboard() {
-  const { user, logout, activeHouseholdId, activeHouseholdName, switchHousehold } = useAuth()
+  const { user: authUser, logout, activeHouseholdId, activeHouseholdName, switchHousehold } = useAuth()
 
   // ── Theme ─────────────────────────────────
   const [isDark, setIsDark] = useState(() => {
@@ -286,8 +286,9 @@ export default function Dashboard() {
     try {
       const res = await cookBatchIngredients(payload)
       triggerToast(res.data?.message || `🔥 ${payload.length} bahan dimasak!`)
-      const dash = await getDashboard()
+      const [dash, histRes] = await Promise.all([getDashboard(), getCookingHistory()])
       setUserData(dash.data.userData); setQuests(dash.data.questsData)
+      setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
       ingredientListRef.current?.refresh()
     } catch (err) {
       if (backupIngredients) {
@@ -432,6 +433,8 @@ export default function Dashboard() {
   // ── Render ────────────────────────────────
   const sharedPanelProps = {
     t, isDark, user,
+    ingredients: ingredientListRef.current?.ingredients || [],
+    filteredIngredients: ingredientListRef.current?.ingredients || [],
     cookingHistory,
     activeFilter, setActiveFilter,
     isCookMode, selectedIds,

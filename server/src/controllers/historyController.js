@@ -40,8 +40,11 @@ export async function deleteHistoryEntry(req, res) {
 export async function clearAllHistory(req, res) {
   try {
     await query(
-      `DELETE FROM cooking_history WHERE user_id = $1`,
-      [req.user.id]
+      `DELETE FROM cooking_history 
+       WHERE ingredient_id IN (
+         SELECT id FROM ingredients WHERE household_id = $1
+       )`,
+      [req.user.householdId]
     )
     return res.json({ message: 'Semua riwayat berhasil dihapus.' })
   } catch (err) {
