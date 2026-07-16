@@ -59,6 +59,12 @@ const IngredientList = forwardRef(({
 
   useEffect(() => {
     fetchList(true)
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchList(false)
+      }
+    }, 2000)
+    return () => clearInterval(interval)
   }, [householdId])
 
   useImperativeHandle(ref, () => ({

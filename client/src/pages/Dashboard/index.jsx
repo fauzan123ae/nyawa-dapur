@@ -158,6 +158,17 @@ export default function Dashboard() {
     return () => clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (document.visibilityState !== 'visible') return
+      try {
+        const histRes = await getCookingHistory()
+        setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
+      } catch {}
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [])
+
   // ── Add Ingredient ────────────────────────
   const handleAdd = async (e) => {
     e.preventDefault()
