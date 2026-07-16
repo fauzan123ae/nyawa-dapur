@@ -1,6 +1,4 @@
-// =============================================
-// MODALS — Add, Edit, BatchCook, CookAmount
-// =============================================
+import { useState, useEffect } from 'react'
 
 // ── Modal Tambah Bahan ──────────────────────
 export function ModalAdd({ t, isDark, isOpen, onClose, onSubmit, form, setForm, isSubmitting }) {
@@ -98,31 +96,123 @@ export function ModalEdit({ t, isDark, isOpen, ingredient, onClose, onSubmit, fo
     </div>
   )
 }
-
 // ── Modal Masak Batch ───────────────────────
 export function ModalBatchCook({ t, isDark, isOpen, selectedIds, ingredients, isBatchCooking, onClose, onConfirm, onToggleSelect, calculateIngredientHealth, getHealthStatus }) {
+  const [cookAmounts, setCookAmounts] = useState({})
+
+  useEffect(() => {
+    if (isOpen) {
+      const selectedIngredients = ingredients.filter(i => selectedIds.has(i.id))
+      setCookAmounts(prev => {
+        const next = {}
+        selectedIngredients.forEach(i => {
+          next[i.id] = prev[i.id] !== undefined ? prev[i.id] : i.quantity
+        })
+        return next
+      })
+    } else {
+      setCookAmounts({})
+    }
+  }, [isOpen, selectedIds, ingredients])
+
   if (!isOpen) return null
+
+  const updateAmount = (id, val) => {
+    setCookAmounts(prev => ({
+      ...prev,
+      [id]: val
+    }))
+  }
+
+  const handleBlur = (id, maxVal) => {
+    let val = parseFloat(cookAmounts[id])
+    if (isNaN(val) || val < 0.1) {
+      val = 0.1
+    } else if (val > maxVal) {
+      val = maxVal
+    }
+    val = Math.round(val * 100) / 100
+    updateAmount(id, val)
+  }
+
+  const handleMinus = (id) => {
+    const val = parseFloat(cookAmounts[id]) || 0.1
+    const newVal = Math.max(0.1, Math.round((val - 1) * 100) / 100)
+    updateAmount(id, newVal)
+  }
+
+  const handlePlus = (id, maxVal) => {
+    const val = parseFloat(cookAmounts[id]) || 0.1
+    const newVal = Math.min(maxVal, Math.round((val + 1) * 100) / 100)
+    updateAmount(id, newVal)
+  }
+
+  const handleConfirmClick = () => {
+    onConfirm(cookAmounts)
+  }
+
   return (
     <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm ${t.modalOverlay}`}>
       <div className={`rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md p-6 shadow-2xl border ${t.modal}`}>
         <h3 className={`text-lg font-black mb-1 ${t.modalTitle}`}>🍳 Konfirmasi Memasak</h3>
         <p className={`text-xs mb-4 ${t.modalSub}`}>Bahan-bahan berikut akan dimasak sekaligus</p>
-        <div className={`rounded-2xl border divide-y mb-4 max-h-48 overflow-y-auto ${isDark ? 'border-zinc-700 divide-zinc-700' : 'border-gray-100 divide-gray-100'}`}>
+        <div className={`rounded-2xl border divide-y mb-4 max-h-56 overflow-y-auto ${isDark ? 'border-zinc-700 divide-zinc-700' : 'border-gray-100 divide-gray-100'}`}>
           {ingredients.filter(i => selectedIds.has(i.id)).map(i => {
             const h = calculateIngredientHealth(i)
             const s = getHealthStatus(h)
+            const currentAmount = cookAmounts[i.id] !== undefined ? cookAmounts[i.id] : i.quantity
             return (
-              <div key={i.id} className={`flex items-center justify-between px-4 py-2.5 ${isDark ? 'bg-zinc-800/60' : 'bg-gray-50'}`}>
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base">🌿</span>
-                  <div>
-                    <p className={`text-xs font-bold ${isDark ? 'text-stone-200' : 'text-gray-700'}`}>{i.name}</p>
-                    <p className={`text-[10px] ${isDark ? 'text-stone-500' : 'text-gray-400'}`}>{i.quantity} {i.unit}</p>
+              <div key={i.id} className={`flex items-center justify-between px-4 py-3 gap-2 ${isDark ? 'bg-zinc-800/60' : 'bg-gray-50'}`}>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-base shrink-0">🌿</span>
+                  <div className="min-w-0">
+                    <p className={`text-xs font-bold truncate ${isDark ? 'text-stone-200' : 'text-gray-700'}`}>{i.name}</p>
+                    <p className={`text-[10px] ${isDark ? 'text-stone-500' : 'text-gray-400'}`}>Stok: {i.quantity} {i.unit}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${s.color}`}>{h}%</span>
-                  <button onClick={() => onToggleSelect(i.id)} className={`text-[10px] font-bold ${isDark ? 'text-zinc-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`}>✕</button>
+                
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`flex items-center rounded-lg py-0.5 px-1.5 gap-1.5 border ${t.qtyBox}`}>
+                      <button
+                        type="button"
+                        onClick={() => handleMinus(i.id)}
+                        disabled={parseFloat(currentAmount) <= 0.1}
+                        className={`text-xs font-black px-1 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed ${t.qtyMinus}`}
+                      >
+                        −
+                      </button>
+                      
+                      <input
+                        type="number"
+                        step="any"
+                        min="0.1"
+                        max={i.quantity}
+                        value={currentAmount}
+                        onChange={(e) => updateAmount(i.id, e.target.value)}
+                        onBlur={() => handleBlur(i.id, i.quantity)}
+                        className={`w-12 text-center text-xs font-mono font-bold focus:outline-none bg-transparent ${t.qtyText}`}
+                      />
+                      
+                      <button
+                        type="button"
+                        onClick={() => handlePlus(i.id, i.quantity)}
+                        disabled={parseFloat(currentAmount) >= i.quantity}
+                        className={`text-xs font-black px-1 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed ${t.qtyPlus}`}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <span className={`text-[10px] font-bold ${isDark ? 'text-stone-400' : 'text-gray-500'}`}>{i.unit}</span>
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={() => onToggleSelect(i.id)}
+                    className={`text-[10px] font-bold px-1.5 py-1 transition-colors ${isDark ? 'text-zinc-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`}
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             )
@@ -134,7 +224,7 @@ export function ModalBatchCook({ t, isDark, isOpen, selectedIds, ingredients, is
         </div>
         <div className="flex gap-2.5">
           <button onClick={onClose} className={`w-1/2 py-2.5 font-bold rounded-xl transition-all text-sm ${t.modalCancel}`}>Batal</button>
-          <button onClick={onConfirm} disabled={isBatchCooking}
+          <button onClick={handleConfirmClick} disabled={isBatchCooking || selectedIds.size === 0}
             className="w-1/2 py-2.5 font-bold rounded-xl transition-all text-sm bg-orange-500 hover:bg-orange-400 text-white shadow-sm disabled:opacity-50">
             {isBatchCooking ? 'Memasak...' : `🔥 Masak ${selectedIds.size} Bahan`}
           </button>

@@ -163,30 +163,57 @@ export async function destroy(req, res) {
 }
 
 export async function cookBatch(req, res) {
-  const { ids } = req.body
-  if (!Array.isArray(ids) || ids.length === 0)
+  const { items } = req.body
+  if (!Array.isArray(items) || items.length === 0)
     return res.status(422).json({ message: 'Pilih minimal 1 bahan.' })
 
-  const placeholders = ids.map((_, i) => `$${i + 1}`).join(',')
-  const result = await query(
-    `SELECT * FROM ingredients WHERE id IN (${placeholders})`,
-    ids
-  )
-  const rows = result.rows
+  // Pass 1: Validate all items first
+  const validatedItems = []
+  for (const item of items) {
+    const id = parseInt(item.id)
+    const amount = parseFloat(item.amount)
 
-  const invalid = rows.find(r => r.household_id !== req.user.householdId)
-  if (invalid) return res.status(403).json({ message: 'Akses ditolak.' })
+    if (isNaN(id) || isNaN(amount) || amount <= 0) {
+      return res.status(422).json({ message: 'Format item atau jumlah tidak valid.' })
+    }
 
-  const notActive = rows.filter(r => r.status !== 'active')
-  if (notActive.length > 0)
-    return res.status(422).json({ message: `${notActive.length} bahan tidak dalam status aktif.` })
+    const ing = await queryOne('SELECT * FROM ingredients WHERE id = $1', [id])
+    if (!ing) {
+      return res.status(404).json({ message: `Bahan dengan ID ${id} tidak ditemukan.` })
+    }
 
-  await query(
-    `UPDATE ingredients SET status='cooked', quantity=0, updated_at=NOW() WHERE id IN (${placeholders})`,
-    ids
-  )
+    if (ing.household_id !== req.user.householdId) {
+      return res.status(403).json({ message: 'Akses ditolak.' })
+    }
 
-  const xpGained = ids.length * 15
+    if (ing.status !== 'active') {
+      return res.status(422).json({ message: `Bahan ${ing.name} tidak aktif.` })
+    }
+
+    const currentQty = parseFloat(ing.quantity)
+    if (amount > currentQty) {
+      return res.status(422).json({ message: `Jumlah masak untuk ${ing.name} melebihi stok.` })
+    }
+
+    validatedItems.push({ ing, amount })
+  }
+
+  // Pass 2: Update all items in DB
+  const results = []
+  for (const { ing, amount } of validatedItems) {
+    const currentQty = parseFloat(ing.quantity)
+    const newQty = Math.max(0, Math.round((currentQty - amount) * 100) / 100)
+    const status = newQty <= 0 ? 'cooked' : 'active'
+
+    await query(
+      'UPDATE ingredients SET quantity = $1, status = $2, updated_at = NOW() WHERE id = $3',
+      [newQty, status, ing.id]
+    )
+
+    results.push({ id: ing.id, newQuantity: newQty, status })
+  }
+
+  const xpGained = items.length * 15
   const newXp    = req.user.xp + xpGained
   await query(
     'UPDATE users SET xp=$1, last_active_at=NOW(), updated_at=NOW() WHERE id=$2',
@@ -195,8 +222,9 @@ export async function cookBatch(req, res) {
   invalidateUserCache(req.user.id)
 
   return res.json({
-    message: `${ids.length} bahan berhasil dimasak! +${xpGained} XP`,
+    message: `${items.length} bahan berhasil dimasak! +${xpGained} XP`,
     xp:      newXp,
-    cooked:  ids.length,
+    results
   })
 }
+

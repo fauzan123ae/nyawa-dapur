@@ -259,20 +259,40 @@ export default function Dashboard() {
     setSelectedIds(new Set(ids))
   }
 
-  const handleConfirmBatchCook = async () => {
-    const ids = [...selectedIds]
+  const handleConfirmBatchCook = async (cookAmounts) => {
+    const payload = Object.entries(cookAmounts).map(([id, amount]) => ({ id: parseInt(id), amount: parseFloat(amount) }))
     setIsBatchCooking(true)
     const cookedAt = new Date().toISOString()
-    setIngredients(prev => prev.map(i => ids.includes(i.id) ? { ...i, status: 'cooked', updatedAt: cookedAt } : i))
+    let backupIngredients = null
+
+    setIngredients(prev => {
+      backupIngredients = prev
+      return prev.map(i => {
+        const match = payload.find(p => p.id === i.id)
+        if (match) {
+          const newQty = Math.max(0, Math.round((i.quantity - match.amount) * 100) / 100)
+          return {
+            ...i,
+            quantity: newQty,
+            status: newQty <= 0 ? 'cooked' : 'active',
+            updatedAt: cookedAt
+          }
+        }
+        return i
+      })
+    })
+
     setIsBatchCookOpen(false); setIsCookMode(false); setSelectedIds(new Set()); setActiveFilter('Dimasak')
     try {
-      await cookBatchIngredients(ids)
-      triggerToast(`🔥 ${ids.length} bahan dimasak! +${ids.length * 15} XP`)
+      const res = await cookBatchIngredients(payload)
+      triggerToast(res.data?.message || `🔥 ${payload.length} bahan dimasak!`)
       const dash = await getDashboard()
       setUserData(dash.data.userData); setQuests(dash.data.questsData)
       ingredientListRef.current?.refresh()
     } catch (err) {
-      setIngredients(prev => prev.map(i => ids.includes(i.id) ? { ...i, status: 'active' } : i))
+      if (backupIngredients) {
+        setIngredients(backupIngredients)
+      }
       triggerToast(err.response?.data?.message || 'Gagal memasak.', 'error')
     } finally {
       setIsBatchCooking(false)
