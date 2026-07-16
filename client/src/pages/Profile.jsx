@@ -123,7 +123,13 @@ export default function Profile() {
       />
 
       <main className="max-w-3xl mx-auto px-4 py-8">
-        
+        <button
+          onClick={() => navigate('/dashboard')}
+          className={`flex items-center gap-2 text-sm font-semibold mb-6 transition-colors ${t.editBtn}`}
+        >
+          ← Kembali ke Dashboard
+        </button>
+
         {/* Header Profil */}
         <div className={`p-6 rounded-3xl border mb-6 flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left ${t.sectionCard}`}>
           <div className="w-24 h-24 rounded-full bg-emerald-500 text-white flex items-center justify-center text-4xl font-black shadow-lg">
