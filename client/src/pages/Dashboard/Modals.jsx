@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { X } from 'lucide-react'
 
 // ── Modal Tambah Bahan ──────────────────────
 export function ModalAdd({ t, isDark, isOpen, onClose, onSubmit, form, setForm, isSubmitting }) {
@@ -395,4 +396,3 @@ export function ModalWasteAmount({ open, ing, t, isDark, onClose, onConfirm }) {
     </div>
   )
 }
-

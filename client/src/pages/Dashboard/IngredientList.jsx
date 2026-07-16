@@ -4,14 +4,14 @@ import IngredientCard from './IngredientCard'
 import { useIngredientRealtime } from '../../hooks/useIngredientRealtime'
 
 const formatRow = (r) => ({
-  id:           r.id,
-  name:         r.name,
-  quantity:     parseFloat(r.quantity),
-  unit:         r.unit,
+  id: r.id,
+  name: r.name,
+  quantity: parseFloat(r.quantity),
+  unit: r.unit,
   purchaseDate: r.purchaseDate || r.purchase_date,
-  expiryDate:   r.expiryDate || r.expiry_date,
-  status:       r.status,
-  updatedAt:    r.updatedAt || r.updated_at,
+  expiryDate: r.expiryDate || r.expiry_date,
+  status: r.status,
+  updatedAt: r.updatedAt || r.updated_at,
 })
 
 const IngredientList = forwardRef(({
@@ -71,13 +71,13 @@ const IngredientList = forwardRef(({
     refresh: () => fetchList(false),
     ingredients,
     setIngredients,
-  }))
+  }), [ingredients, fetchList])
 
   const filteredIngredients = useMemo(() => {
     return ingredients.filter(i => {
-      if (activeFilter === 'Busuk')   return i.status === 'wasted' || (i.status === 'active' && calculateIngredientHealth(i) <= 0)
-      if (i.status !== 'active')      return false
-      if (activeFilter === 'Semua')   return true
+      if (activeFilter === 'Busuk') return i.status === 'wasted' || (i.status === 'active' && calculateIngredientHealth(i) <= 0)
+      if (i.status !== 'active') return false
+      if (activeFilter === 'Semua') return true
       return getHealthStatus(calculateIngredientHealth(i)).label === activeFilter
     })
   }, [ingredients, activeFilter, calculateIngredientHealth, getHealthStatus])
@@ -118,10 +118,10 @@ const IngredientList = forwardRef(({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
           {filteredIngredients.map(ing => {
-            const health    = calculateIngredientHealth(ing)
+            const health = calculateIngredientHealth(ing)
             const statusInfo = getHealthStatus(health)
-            const isWasted  = ing.status === 'wasted' || (ing.status === 'active' && health <= 0)
-            const isCooked  = ing.status === 'cooked'
+            const isWasted = ing.status === 'wasted' || (ing.status === 'active' && health <= 0)
+            const isCooked = ing.status === 'cooked'
             return (
               <IngredientCard
                 key={ing.id}
