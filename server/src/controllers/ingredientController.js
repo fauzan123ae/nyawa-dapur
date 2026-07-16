@@ -163,6 +163,10 @@ export async function waste(req, res) {
     WHERE id = $3`,
     [isFullWaste ? 'wasted' : 'active', isFullWaste ? 0 : ing.quantity - amount, ing.id]
   )
+  await query(
+    `INSERT INTO waste_history (user_id, ingredient_id, ingredient_name, quantity, unit) VALUES ($1, $2, $3, $4, $5)`,
+    [req.user.id, ing.id, ing.name, amount, ing.unit]
+  )
   return res.json({ message: isFullWaste ? 'Bahan ditandai wasted.' : `${amount} ${ing.unit} dicatat busuk.` })
 }
 
@@ -244,4 +248,3 @@ export async function cookBatch(req, res) {
     results
   })
 }
-

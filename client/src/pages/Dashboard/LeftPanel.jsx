@@ -19,7 +19,7 @@ const formatDate = (dateStr) => {
 // =============================================
 export default function LeftPanel({
   t, isDark, user,
-  ingredients, filteredIngredients, cookingHistory,
+  ingredients, filteredIngredients, cookingHistory, wasteHistory,
   activeFilter, setActiveFilter,
   isCookMode, selectedIds,
   pantryStats,
@@ -36,6 +36,7 @@ export default function LeftPanel({
   onDelete,
   onDeleteHistory,
   onClearAllHistory,
+  onDeleteWasteEntry,
   children,
 }) {
   const statMap  = { Segar: t.statSegar, Waspada: t.statWaspada, Kritis: t.statKritis, Busuk: t.statBusuk }
@@ -210,8 +211,51 @@ export default function LeftPanel({
         </div>
       )}
 
+      {/* RIWAYAT BUSUK */}
+      {activeFilter === 'Busuk' && (
+        <div className="flex flex-col gap-3">
+          {(!wasteHistory || wasteHistory.length === 0) ? (
+            <div className={`border-2 border-dashed rounded-3xl p-10 text-center flex flex-col items-center gap-4 ${t.emptyBox}`}>
+              <span className="text-4xl">🌱</span>
+              <p className="text-xs font-black opacity-80">Belum ada bahan yang dicatat busuk. Bagus!</p>
+            </div>
+          ) : wasteHistory.map(h => {
+            const isOwn = h.wasted_by === user?.name
+            const whoName = isOwn ? 'Kamu' : (h.wasted_by || 'Seseorang')
+            return (
+              <div key={h.id} className={`rounded-3xl px-5 py-4 border-2 flex items-center justify-between gap-4 ${t.ingCard}`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-danger/10 border border-danger/20">
+                    <span className="text-lg">🍄</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`font-black text-sm truncate ${isDark ? 'text-stone-100' : 'text-gray-800'}`}>{h.ingredient_name}</p>
+                    <p className={`text-xs flex items-center gap-1.5 mt-0.5 flex-wrap font-bold ${isDark ? 'text-stone-400' : 'text-[#6B7280]'}`}>
+                      <span className="flex items-center gap-1 text-danger">👤 {whoName}</span>
+                      <span className="opacity-40">•</span>
+                      <span>{parseFloat(h.quantity)} {h.unit} busuk</span>
+                    </p>
+                    <p className={`text-[10px] flex items-center gap-1 font-mono font-bold mt-1 ${isDark ? 'text-stone-500' : 'text-[#6B7280]'}`}>
+                      <Clock className="w-3 h-3 text-danger" /> {formatDate(h.wasted_at)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onDeleteWasteEntry(h.id)}
+                  title="Hapus catatan ini"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-transparent transition-all duration-200 active:scale-90 shrink-0 focus:outline-none ${
+                    isDark ? 'text-stone-500 hover:text-red-400 hover:bg-red-950/40' : 'text-[#6B7280] hover:text-danger hover:bg-danger/10 hover:border-danger/20'
+                  }`}>
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {/* INGREDIENT LIST FROM PARENT */}
-      {activeFilter !== 'Riwayat' && children}
+      {activeFilter !== 'Riwayat' && activeFilter !== 'Busuk' && children}
     </section>
   )
 }
