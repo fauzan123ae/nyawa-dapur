@@ -3,12 +3,15 @@ import { query } from '../db/index.js'
 export async function getCookingHistory(req, res) {
   try {
     const result = await query(
-      `SELECT id, ingredient_id, ingredient_name, quantity, unit, cooked_at, xp_earned
-       FROM cooking_history
-       WHERE user_id = $1
-       ORDER BY cooked_at DESC
+      `SELECT ch.id, ch.ingredient_id, ch.ingredient_name, ch.quantity, ch.unit, ch.cooked_at, ch.xp_earned,
+              u.name as cooked_by
+       FROM cooking_history ch
+       JOIN users u ON ch.user_id = u.id
+       JOIN ingredients i ON ch.ingredient_id = i.id
+       WHERE i.household_id = $1
+       ORDER BY ch.cooked_at DESC
        LIMIT 100`,
-      [req.user.id]
+      [req.user.householdId]
     )
     return res.json(result.rows)
   } catch (err) {

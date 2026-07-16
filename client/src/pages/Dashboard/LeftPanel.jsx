@@ -1,11 +1,23 @@
 import { PlusIcon } from './icons'
 import IngredientCard from './IngredientCard'
 
+const formatDate = (dateStr) => {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return ''
+  const day = d.getDate()
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+  const month = months[d.getMonth()]
+  const year = d.getFullYear()
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  return `${day} ${month} ${year} · ${hours}:${minutes}`
+}
+
 // =============================================
 // LEFT PANEL — Inventaris + Filter + List
 // =============================================
 export default function LeftPanel({
-  t, isDark,
+  t, isDark, user,
   ingredients, filteredIngredients, cookingHistory,
   activeFilter, setActiveFilter,
   isCookMode, selectedIds,
@@ -103,7 +115,7 @@ export default function LeftPanel({
 
       {/* FILTER TABS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {['Semua','Segar','Waspada','Kritis','Busuk','Dimasak','Riwayat'].map(filter => (
+        {['Semua','Segar','Waspada','Kritis','Busuk','Riwayat'].map(filter => (
           <button key={filter} onClick={() => setActiveFilter(filter)}
             className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 active:scale-95 ${activeFilter === filter ? t.filterActive : t.filterIdle}`}>
             {filter}
@@ -133,40 +145,50 @@ export default function LeftPanel({
               <span className="text-4xl">🍳</span>
               <p className="text-sm">Belum ada riwayat masak.</p>
             </div>
-          ) : cookingHistory.map(h => (
-            <div key={h.id} className={`rounded-2xl px-5 py-4 border flex items-center justify-between gap-4 ${t.ingCard}`}>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${isDark ? 'bg-orange-950/50' : 'bg-orange-50'}`}>🔥</div>
-                <div className="min-w-0">
-                  <p className={`font-bold text-sm truncate ${isDark ? 'text-stone-100' : 'text-gray-800'}`}>{h.ingredient_name}</p>
-                  <p className={`text-xs ${isDark ? 'text-stone-400' : 'text-gray-500'}`}>{parseFloat(h.quantity)} {h.unit} dimasak</p>
+          ) : cookingHistory.map(h => {
+            const isOwn = h.cooked_by === user?.name
+            const chefName = isOwn ? 'Kamu' : (h.cooked_by || 'Seseorang')
+            return (
+              <div key={h.id} className={`rounded-2xl px-5 py-4 border flex items-center justify-between gap-4 ${t.ingCard}`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${isDark ? 'bg-orange-950/50' : 'bg-orange-50'}`}>🔥</div>
+                  <div className="min-w-0">
+                    <p className={`font-bold text-sm truncate ${isDark ? 'text-stone-100' : 'text-gray-800'}`}>{h.ingredient_name}</p>
+                    <p className={`text-xs ${isDark ? 'text-stone-400' : 'text-gray-500'} flex items-center gap-1.5 mt-0.5 flex-wrap`}>
+                      <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                        👤 {chefName}
+                      </span>
+                      <span className="opacity-40">•</span>
+                      <span>{parseFloat(h.quantity)} {h.unit}</span>
+                    </p>
+                    <p className={`text-[10px] font-mono mt-1 ${isDark ? 'text-stone-500' : 'text-gray-400'}`}>
+                      {formatDate(h.cooked_at)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-extrabold border ${
+                    isDark ? 'bg-emerald-950/40 border-emerald-800/40 text-lime-400' : 'bg-green-50 border-green-200 text-green-700'
+                  }`}>
+                    +{h.xp_earned} XP
+                  </span>
+                  <button
+                    onClick={() => onDeleteHistory(h.id)}
+                    title="Hapus riwayat ini"
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90 shrink-0 ${
+                      isDark
+                        ? 'text-stone-500 hover:text-red-400 hover:bg-red-950/40'
+                        : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="text-right">
-                  <p className={`text-[11px] font-bold ${isDark ? 'text-lime-400' : 'text-green-600'}`}>+{h.xp_earned} XP</p>
-                  <p className={`text-[10px] font-mono ${isDark ? 'text-stone-500' : 'text-gray-400'}`}>
-                    {new Date(h.cooked_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' })}
-                    {' '}
-                    {new Date(h.cooked_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}
-                  </p>
-                </div>
-                <button
-                  onClick={() => onDeleteHistory(h.id)}
-                  title="Hapus riwayat ini"
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90 shrink-0 ${
-                    isDark
-                      ? 'text-stone-500 hover:text-red-400 hover:bg-red-950/40'
-                      : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

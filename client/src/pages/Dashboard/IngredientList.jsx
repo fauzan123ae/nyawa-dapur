@@ -58,7 +58,6 @@ const IngredientList = forwardRef(({
 
   const filteredIngredients = useMemo(() => {
     return ingredients.filter(i => {
-      if (activeFilter === 'Dimasak') return i.status === 'cooked'
       if (activeFilter === 'Busuk')   return i.status === 'wasted' || (i.status === 'active' && calculateIngredientHealth(i) <= 0)
       if (i.status !== 'active')      return false
       if (activeFilter === 'Semua')   return true

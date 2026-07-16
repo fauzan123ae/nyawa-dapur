@@ -36,7 +36,7 @@ function applyOptimistic(list, id, patch) {
 // DASHBOARD — orchestrator (state + handlers)
 // =============================================
 export default function Dashboard() {
-  const { logout, activeHouseholdId, activeHouseholdName, switchHousehold } = useAuth()
+  const { user, logout, activeHouseholdId, activeHouseholdName, switchHousehold } = useAuth()
 
   // ── Theme ─────────────────────────────────
   const [isDark, setIsDark] = useState(() => {
@@ -233,7 +233,7 @@ export default function Dashboard() {
       setUserData(res.data.userData); setQuests(res.data.questsData)
       setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
       ingredientListRef.current?.refresh()
-      if (remaining === 0) setActiveFilter('Dimasak')
+      if (remaining === 0) setActiveFilter('Riwayat')
       triggerToast(`🔥 ${amount} ${ing.unit} ${ing.name} dimasak! Sisa: ${remaining} ${ing.unit}.`)
     } catch (err) {
       setCookingHistory(prev => prev.filter(h => h.id !== optimisticEntry.id))
@@ -282,7 +282,7 @@ export default function Dashboard() {
       })
     })
 
-    setIsBatchCookOpen(false); setIsCookMode(false); setSelectedIds(new Set()); setActiveFilter('Dimasak')
+    setIsBatchCookOpen(false); setIsCookMode(false); setSelectedIds(new Set()); setActiveFilter('Riwayat')
     try {
       const res = await cookBatchIngredients(payload)
       triggerToast(res.data?.message || `🔥 ${payload.length} bahan dimasak!`)
@@ -431,7 +431,7 @@ export default function Dashboard() {
 
   // ── Render ────────────────────────────────
   const sharedPanelProps = {
-    t, isDark,
+    t, isDark, user,
     cookingHistory,
     activeFilter, setActiveFilter,
     isCookMode, selectedIds,

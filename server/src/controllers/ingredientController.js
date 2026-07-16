@@ -204,10 +204,15 @@ export async function cookBatch(req, res) {
     const currentQty = parseFloat(ing.quantity)
     const newQty = Math.max(0, Math.round((currentQty - amount) * 100) / 100)
     const status = newQty <= 0 ? 'cooked' : 'active'
-
     await query(
       'UPDATE ingredients SET quantity = $1, status = $2, updated_at = NOW() WHERE id = $3',
       [newQty, status, ing.id]
+    )
+
+    await query(
+      `INSERT INTO cooking_history (user_id, ingredient_id, ingredient_name, quantity, unit, cooked_at, xp_earned)
+       VALUES ($1, $2, $3, $4, $5, NOW(), 15)`,
+      [req.user.id, ing.id, ing.name, amount, ing.unit]
     )
 
     results.push({ id: ing.id, newQuantity: newQty, status })
