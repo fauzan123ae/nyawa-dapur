@@ -4,7 +4,7 @@ import { getDashboard, buyFirewood, igniteWood } from '../../api/dashboard'
 import { addIngredient, updateIngredient, adjustQuantity, cookIngredient, cookAmountIngredient, cookBatchIngredients, wasteIngredient, deleteIngredient } from '../../api/ingredients'
 import { claimQuest } from '../../api/quests'
 import { getCookingHistory, deleteHistoryEntry, clearAllHistory } from '../../api/history'
-import { getWasteHistory, deleteWasteEntry } from '../../api/wasteHistory'
+import { getWasteHistory, deleteWasteEntry } from '../../api/wasteHistory_api'
 import { getMyHouseholds } from '../../api/household'
 import { useHistoryRealtime } from '../../hooks/useHistoryRealtime'
 
