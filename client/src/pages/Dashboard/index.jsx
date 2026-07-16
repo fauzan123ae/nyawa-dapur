@@ -4,7 +4,7 @@ import { getDashboard, buyFirewood, igniteWood } from '../../api/dashboard'
 import { addIngredient, updateIngredient, adjustQuantity, cookIngredient, cookAmountIngredient, cookBatchIngredients, wasteIngredient, deleteIngredient } from '../../api/ingredients'
 import { claimQuest } from '../../api/quests'
 import { getCookingHistory, deleteHistoryEntry, clearAllHistory } from '../../api/history'
-import { getWasteHistory, deleteWasteEntry } from '../../api/wasteHistory_api'
+import { getWasteHistory, deleteWasteEntry } from '../../api/wasteHistory'
 import { getMyHouseholds } from '../../api/household'
 import { useHistoryRealtime } from '../../hooks/useHistoryRealtime'
 
@@ -349,8 +349,6 @@ export default function Dashboard() {
     try {
       await wasteIngredient(ing.id, amount)
       ingredientListRef.current?.refresh()
-      const wasteRes = await getWasteHistory()
-      setWasteHistory(Array.isArray(wasteRes.data) ? wasteRes.data : [])
       triggerToast(isFullWaste ? 'Bahan dicatat sebagai busuk.' : `${amount} ${ing.unit} dicatat busuk.`, 'error')
     } catch {
       setIngredients(prev => applyOptimistic(prev, ing.id, { status: ing.status, quantity: ing.quantity }))
