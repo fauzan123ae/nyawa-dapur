@@ -349,6 +349,7 @@ export default function Dashboard() {
     setWasteHistory(prev => prev.filter(h => h.id !== id))
     try {
       await deleteWasteEntry(id)
+      ingredientListRef.current?.refresh()
       triggerToast('Log busuk dihapus.')
     } catch {
       // Rollback ke data sebelum dihapus
