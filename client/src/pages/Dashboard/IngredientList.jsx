@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react'
+import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from 'react'
 import { getIngredients } from '../../api/ingredients'
 import IngredientCard from './IngredientCard'
 import { useIngredientRealtime } from '../../hooks/useIngredientRealtime'
@@ -20,11 +20,16 @@ const IngredientList = forwardRef(({
   onToggleCookMode, onSelectAllActive, onOpenCookModal,
   onToggleSelectIngredient, onOpenAddModal, onOpenEditModal,
   onAdjustQuantity, onOpenCookAmountModal, onWaste, onDelete,
-  onDataLoaded, // callback to pass ingredients & pantryStats to parent if needed
+  onDataLoaded,
   householdId, currentUserId
 }, ref) => {
   const [ingredients, setIngredients] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // Gunakan ref untuk onDataLoaded agar tidak masuk dependency array
+  // dan tidak memicu re-render / infinite loop
+  const onDataLoadedRef = useRef(onDataLoaded)
+  useEffect(() => { onDataLoadedRef.current = onDataLoaded }, [onDataLoaded])
 
   const fetchList = async (showLoading = false) => {
     if (showLoading) setLoading(true)
@@ -32,7 +37,6 @@ const IngredientList = forwardRef(({
       const res = await getIngredients()
       const data = res.data.map(formatRow)
       setIngredients(data)
-      if (onDataLoaded) onDataLoaded(data)
     } catch (err) {
       console.error(err)
     } finally {
@@ -59,11 +63,13 @@ const IngredientList = forwardRef(({
 
   useEffect(() => {
     fetchList(true)
+    // Naikkan interval dari 1 detik ke 30 detik — realtime sudah ditangani
+    // oleh useIngredientRealtime (Supabase), polling hanya sebagai fallback
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         fetchList(false)
       }
-    }, 1000)
+    }, 30_000)
     return () => clearInterval(interval)
   }, [householdId])
 
@@ -96,9 +102,11 @@ const IngredientList = forwardRef(({
     return { segar, layu, sekarat, busuk }
   }, [ingredients, calculateIngredientHealth, getHealthStatus])
 
+  // Kirim stats ke parent hanya saat ingredients atau pantryStats benar-benar berubah.
+  // Pakai ref untuk callback agar tidak jadi dependency yang memicu loop.
   useEffect(() => {
-    if (onDataLoaded) onDataLoaded(ingredients, pantryStats)
-  }, [ingredients, pantryStats, onDataLoaded])
+    onDataLoadedRef.current?.(ingredients, pantryStats)
+  }, [ingredients, pantryStats])
 
   if (loading) {
     return (

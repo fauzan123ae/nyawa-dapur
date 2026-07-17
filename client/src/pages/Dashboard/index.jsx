@@ -18,14 +18,14 @@ import { useIngredientHealth } from './useIngredientHealth'
 import IngredientList from './IngredientList'
 
 const formatRow = (r) => ({
-  id:           r.id,
-  name:         r.name,
-  quantity:     parseFloat(r.quantity),
-  unit:         r.unit,
+  id: r.id,
+  name: r.name,
+  quantity: parseFloat(r.quantity),
+  unit: r.unit,
   purchaseDate: r.purchase_date,
-  expiryDate:   r.expiry_date,
-  status:       r.status,
-  updatedAt:    r.updated_at,
+  expiryDate: r.expiry_date,
+  status: r.status,
+  updatedAt: r.updated_at,
 })
 
 // =============================================
@@ -41,18 +41,18 @@ export default function Dashboard() {
   const t = isDark ? themes.dark : themes.light
   const toggleTheme = () => setIsDark(prev => {
     const next = !prev
-    try { localStorage.setItem('nd-theme', next ? 'dark' : 'light') } catch {}
+    try { localStorage.setItem('nd-theme', next ? 'dark' : 'light') } catch { }
     return next
   })
 
   // ── Data state ────────────────────────────
-  const [userData, setUserData]             = useState(null)
-  const [quests, setQuests]                 = useState([])
+  const [userData, setUserData] = useState(null)
+  const [quests, setQuests] = useState([])
   const [cookingHistory, setCookingHistory] = useState([])
-  const [wasteHistory, setWasteHistory]     = useState([])
-  const [pantryStats, setPantryStats]       = useState({ segar: 0, layu: 0, sekarat: 0, busuk: 0 })
-  const [now, setNow]                       = useState(new Date().toISOString())
-  const [pageLoading, setPageLoading]       = useState(true)
+  const [wasteHistory, setWasteHistory] = useState([])
+  const [pantryStats, setPantryStats] = useState({ segar: 0, layu: 0, sekarat: 0, busuk: 0 })
+  const [now, setNow] = useState(new Date().toISOString())
+  const [pageLoading, setPageLoading] = useState(true)
 
   // ── UI state ──────────────────────────────
   const [activeFilter, setActiveFilter] = useState('Semua')
@@ -61,31 +61,31 @@ export default function Dashboard() {
   const handleDataLoaded = useCallback((data, stats) => {
     setPantryStats(stats || { segar: 0, layu: 0, sekarat: 0, busuk: 0 })
   }, [])
-  const [showToast, setShowToast]       = useState(null)
+  const [showToast, setShowToast] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [mobileTab, setMobileTab]       = useState('pantry')
-  const [loadingIds, setLoadingIds]     = useState(new Set())
+  const [mobileTab, setMobileTab] = useState('pantry')
+  const [loadingIds, setLoadingIds] = useState(new Set())
   const toastRef = useRef(null)
 
   // ── Modal: Add ────────────────────────────
-  const [isAddOpen, setIsAddOpen]       = useState(false)
-  const [addForm, setAddForm]           = useState({ name: '', qty: '', unit: 'gram', daysToExpiry: '3' })
+  const [isAddOpen, setIsAddOpen] = useState(false)
+  const [addForm, setAddForm] = useState({ name: '', qty: '', unit: 'gram', daysToExpiry: '3' })
   const [isAddSubmitting, setIsAddSubmitting] = useState(false)
 
   // ── Modal: Edit ───────────────────────────
-  const [isEditOpen, setIsEditOpen]     = useState(false)
-  const [editingIng, setEditingIng]     = useState(null)
-  const [editForm, setEditForm]         = useState({ name: '', qty: '', unit: 'gram', daysToExpiry: '3' })
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editingIng, setEditingIng] = useState(null)
+  const [editForm, setEditForm] = useState({ name: '', qty: '', unit: 'gram', daysToExpiry: '3' })
   const [isEditSubmitting, setIsEditSubmitting] = useState(false)
 
   // ── Modal: Batch Cook ─────────────────────
   const [isBatchCookOpen, setIsBatchCookOpen] = useState(false)
-  const [isCookMode, setIsCookMode]     = useState(false)
-  const [selectedIds, setSelectedIds]   = useState(new Set())
+  const [isCookMode, setIsCookMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(new Set())
   const [isBatchCooking, setIsBatchCooking] = useState(false)
 
   // ── Modal: Cook Amount ────────────────────
-  const [cookAmountIng, setCookAmountIng]     = useState(null)
+  const [cookAmountIng, setCookAmountIng] = useState(null)
   const [cookAmountValue, setCookAmountValue] = useState('')
   const [isCookingAmount, setIsCookingAmount] = useState(false)
 
@@ -150,7 +150,7 @@ export default function Dashboard() {
         } else if (res.data.length > 0) {
           switchHousehold(String(res.data[0].id), res.data[0].name)
         }
-      }).catch(() => {})
+      }).catch(() => { })
     }
   }, [])
 
@@ -161,7 +161,8 @@ export default function Dashboard() {
     return () => clearInterval(interval)
   }, [])
 
-  // Polling: cookingHistory + wasteHistory setiap 2 detik
+  // Polling: cookingHistory + wasteHistory setiap 30 detik (fallback)
+  // Polling cepat dihindari karena akan overwrite optimistic delete
   useEffect(() => {
     const interval = setInterval(async () => {
       if (document.visibilityState !== 'visible') return
@@ -169,8 +170,8 @@ export default function Dashboard() {
         const [histRes, wasteRes] = await Promise.all([getCookingHistory(), getWasteHistory()])
         setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
         setWasteHistory(Array.isArray(wasteRes.data) ? wasteRes.data : [])
-      } catch {}
-    }, 2000)
+      } catch { }
+    }, 30_000)
     return () => clearInterval(interval)
   }, [])
 
@@ -230,7 +231,7 @@ export default function Dashboard() {
   const handleConfirmCookAmount = async (e) => {
     e.preventDefault()
     if (!cookAmountIng) return
-    const ing    = cookAmountIng
+    const ing = cookAmountIng
     const amount = parseFloat(cookAmountValue)
     if (isNaN(amount) || amount <= 0) { triggerToast('Jumlah harus lebih dari 0.', 'error'); return }
     if (amount > ing.quantity) { triggerToast(`Stok tidak cukup. Maksimal ${ing.quantity} ${ing.unit}.`, 'error'); return }
@@ -343,11 +344,15 @@ export default function Dashboard() {
 
   // ── Waste History ─────────────────────────
   const handleDeleteWasteEntry = async (id) => {
+    // Simpan snapshot dulu untuk rollback jika API gagal
+    const snapshot = wasteHistory
     setWasteHistory(prev => prev.filter(h => h.id !== id))
     try {
       await deleteWasteEntry(id)
       triggerToast('Log busuk dihapus.')
     } catch {
+      // Rollback ke data sebelum dihapus
+      setWasteHistory(snapshot)
       triggerToast('Gagal menghapus.', 'error')
     }
   }
@@ -412,13 +417,13 @@ export default function Dashboard() {
   }
 
   // ── Derived ───────────────────────────────
-  const user      = userData || { xp: 0, firewood: 0, currentStreak: 0, isFireLit: false }
+  const user = userData || { xp: 0, firewood: 0, currentStreak: 0, isFireLit: false }
   const isFireLit = user.isFireLit || false
 
   const flameLevel = useMemo(() => {
     const s = user.currentStreak || 0
     if (s >= 30) return 'Mythic Flame'
-    if (s >= 7)  return 'Blaze'
+    if (s >= 7) return 'Blaze'
     return 'Spark'
   }, [user])
 
@@ -443,19 +448,19 @@ export default function Dashboard() {
     isCookMode, selectedIds,
     pantryStats, loadingIds,
     calculateIngredientHealth, getHealthStatus,
-    onToggleCookMode:         toggleCookMode,
-    onSelectAllActive:        selectAllActive,
-    onOpenCookModal:          () => { if (selectedIds.size === 0) { triggerToast('Pilih minimal 1 bahan dulu.', 'error'); return } setIsBatchCookOpen(true) },
+    onToggleCookMode: toggleCookMode,
+    onSelectAllActive: selectAllActive,
+    onOpenCookModal: () => { if (selectedIds.size === 0) { triggerToast('Pilih minimal 1 bahan dulu.', 'error'); return } setIsBatchCookOpen(true) },
     onToggleSelectIngredient: toggleSelectIngredient,
-    onOpenAddModal:           () => setIsAddOpen(true),
-    onOpenEditModal:          handleOpenEdit,
-    onAdjustQuantity:         handleAdjustQuantity,
-    onOpenCookAmountModal:    handleOpenCookAmount,
-    onWaste:                  handleWaste,
-    onDelete:                 handleDelete,
-    onDeleteHistory:          handleDeleteHistory,
-    onClearAllHistory:        handleClearAllHistory,
-    onDeleteWasteEntry:       handleDeleteWasteEntry,
+    onOpenAddModal: () => setIsAddOpen(true),
+    onOpenEditModal: handleOpenEdit,
+    onAdjustQuantity: handleAdjustQuantity,
+    onOpenCookAmountModal: handleOpenCookAmount,
+    onWaste: handleWaste,
+    onDelete: handleDelete,
+    onDeleteHistory: handleDeleteHistory,
+    onClearAllHistory: handleClearAllHistory,
+    onDeleteWasteEntry: handleDeleteWasteEntry,
   }
 
   return (
@@ -470,7 +475,7 @@ export default function Dashboard() {
       {/* MOBILE TAB SWITCHER */}
       <div className={`lg:hidden sticky top-[56px] z-30 px-4 py-2 border-b backdrop-blur-sm ${isDark ? 'bg-stone-900/90 border-zinc-800' : 'bg-white/90 border-gray-100'}`}>
         <div className={`flex rounded-xl p-1 gap-1 ${isDark ? 'bg-zinc-800' : 'bg-gray-100'}`}>
-          {[['pantry','🍃 Pantri'],['dapur','🔥 Dapur & Misi']].map(([val, label]) => (
+          {[['pantry', '🍃 Pantri'], ['dapur', '🔥 Dapur & Misi']].map(([val, label]) => (
             <button key={val} onClick={() => setMobileTab(val)}
               className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mobileTab === val ? (isDark ? 'bg-emerald-600 text-white' : 'bg-green-600 text-white') : (isDark ? 'text-stone-400' : 'text-gray-500')}`}>
               {label}
@@ -515,8 +520,8 @@ export default function Dashboard() {
       )}
 
       {/* MODALS */}
-      <ModalAdd      t={t} isDark={isDark} isOpen={isAddOpen}  onClose={() => setIsAddOpen(false)}  onSubmit={handleAdd}      form={addForm}  setForm={setAddForm}  isSubmitting={isAddSubmitting} />
-      <ModalEdit     t={t} isDark={isDark} isOpen={isEditOpen} onClose={() => { setIsEditOpen(false); setEditingIng(null) }} onSubmit={handleSaveEdit} form={editForm} setForm={setEditForm} isSubmitting={isEditSubmitting} ingredient={editingIng} />
+      <ModalAdd t={t} isDark={isDark} isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onSubmit={handleAdd} form={addForm} setForm={setAddForm} isSubmitting={isAddSubmitting} />
+      <ModalEdit t={t} isDark={isDark} isOpen={isEditOpen} onClose={() => { setIsEditOpen(false); setEditingIng(null) }} onSubmit={handleSaveEdit} form={editForm} setForm={setEditForm} isSubmitting={isEditSubmitting} ingredient={editingIng} />
       <ModalBatchCook t={t} isDark={isDark} isOpen={isBatchCookOpen} selectedIds={selectedIds} ingredients={ingredientListRef.current?.ingredients || []} isBatchCooking={isBatchCooking}
         onClose={() => setIsBatchCookOpen(false)} onConfirm={handleConfirmBatchCook} onToggleSelect={toggleSelectIngredient}
         calculateIngredientHealth={calculateIngredientHealth} getHealthStatus={getHealthStatus} />

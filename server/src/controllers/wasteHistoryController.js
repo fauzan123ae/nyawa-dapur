@@ -24,7 +24,18 @@ export async function deleteWasteHistory(req, res) {
     const { rows } = await query('SELECT * FROM waste_history WHERE id=$1', [req.params.id])
     const entry = rows[0]
     if (!entry) return res.status(404).json({ error: 'Not found' })
-    if (entry.user_id !== req.user.id) return res.status(403).json({ error: 'Forbidden' })
+
+    // Izinkan hapus jika: entry milik user sendiri ATAU user adalah anggota household yang sama
+    // (GET sudah menampilkan semua entry dalam household, hapus harus konsisten)
+    const isSameUser = Number(entry.user_id) === Number(req.user.id)
+    const isSameHousehold = await query(
+      'SELECT 1 FROM waste_history wh JOIN household_members hm ON hm.user_id = wh.user_id WHERE wh.id=$1 AND hm.household_id=$2',
+      [req.params.id, req.user.householdId]
+    )
+    if (!isSameUser && isSameHousehold.rows.length === 0) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
+
     await query('DELETE FROM waste_history WHERE id=$1', [req.params.id])
     return res.json({ message: 'Dihapus.' })
   } catch (err) {

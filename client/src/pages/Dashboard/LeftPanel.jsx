@@ -39,18 +39,18 @@ export default function LeftPanel({
   onDeleteWasteEntry,
   children,
 }) {
-  const statMap  = { Segar: t.statSegar, Waspada: t.statWaspada, Kritis: t.statKritis, Busuk: t.statBusuk }
+  const statMap = { Segar: t.statSegar, Waspada: t.statWaspada, Kritis: t.statKritis, Busuk: t.statBusuk }
   const countMap = { Segar: pantryStats.segar, Waspada: pantryStats.layu, Kritis: pantryStats.sekarat, Busuk: pantryStats.busuk }
-  const icons    = { 
-    Segar: <span className="text-lg animate-sway">🌿</span>, 
-    Waspada: <span className="text-lg animate-bounce-cute">🥕</span>, 
-    Kritis: <span className="text-lg animate-pulse">🍅</span>, 
-    Busuk: <span className="text-lg">🍄</span> 
+  const icons = {
+    Segar: <span className="text-lg animate-sway">🌿</span>,
+    Waspada: <span className="text-lg animate-bounce-cute">🥕</span>,
+    Kritis: <span className="text-lg animate-pulse">🍅</span>,
+    Busuk: <span className="text-lg">🍄</span>
   }
 
   return (
     <section className="flex flex-col gap-4 sm:gap-6 relative">
-      
+
       {/* Decorative tiny bee floating */}
       <div className="absolute -top-6 right-2 text-sm select-none pointer-events-none animate-float-slow hidden md:block">
         🐝 <span className="text-[10px] text-muted font-bold bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-border dark:border-[#34413B]">bzz...</span>
@@ -58,7 +58,7 @@ export default function LeftPanel({
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {['Segar','Waspada','Kritis','Busuk'].map(filter => (
+        {['Segar', 'Waspada', 'Kritis', 'Busuk'].map(filter => (
           <button key={filter} onClick={() => setActiveFilter(filter)}
             className={`p-3.5 sm:p-4 rounded-[2rem] border-2 text-left transition-all duration-350 btn-squish focus:outline-none ${activeFilter === filter ? statMap[filter].on : statMap[filter].off}`}>
             <div className="flex justify-between items-center mb-1">
@@ -86,9 +86,8 @@ export default function LeftPanel({
             {!isCookMode ? (
               <>
                 <button onClick={onToggleCookMode}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 font-extrabold rounded-xl transition-all duration-200 text-xs flex-1 sm:flex-none justify-center btn-squish border-2 focus:outline-none ${
-                    isDark ? 'bg-[#7BAE7F]/20 border-[#7BAE7F]/40 text-[#7BAE7F]' : 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
-                  }`}>
+                  className={`flex items-center gap-1.5 px-4 py-2.5 font-extrabold rounded-xl transition-all duration-200 text-xs flex-1 sm:flex-none justify-center btn-squish border-2 focus:outline-none ${isDark ? 'bg-[#7BAE7F]/20 border-[#7BAE7F]/40 text-[#7BAE7F]' : 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
+                    }`}>
                   <Utensils className="w-3.5 h-3.5" /> Mulai Masak 🍳
                 </button>
                 <button onClick={onOpenAddModal}
@@ -99,15 +98,13 @@ export default function LeftPanel({
             ) : (
               <>
                 <button onClick={onSelectAllActive}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center border-2 transition-all duration-200 btn-squish focus:outline-none ${
-                    isDark ? 'bg-zinc-800 border-[#34413B] text-stone-300' : 'bg-[#F8F7F2] border-border text-[#1F2937] hover:bg-[#E5E7EB]'
-                  }`}>
+                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center border-2 transition-all duration-200 btn-squish focus:outline-none ${isDark ? 'bg-zinc-800 border-[#34413B] text-stone-300' : 'bg-[#F8F7F2] border-border text-[#1F2937] hover:bg-[#E5E7EB]'
+                    }`}>
                   <CheckSquare className="w-3.5 h-3.5" /> Pilih Semua
                 </button>
                 <button onClick={onOpenCookModal} disabled={selectedIds.size === 0}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center transition-all duration-200 btn-squish focus:outline-none ${
-                    selectedIds.size > 0 ? 'bg-gradient-to-r from-secondary to-accent text-white shadow-sm' : isDark ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border-2 border-transparent' : 'bg-[#E5E7EB] text-[#6B7280] cursor-not-allowed border-2 border-transparent'
-                  }`}>
+                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center transition-all duration-200 btn-squish focus:outline-none ${selectedIds.size > 0 ? 'bg-gradient-to-r from-secondary to-accent text-white shadow-sm' : isDark ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border-2 border-transparent' : 'bg-[#E5E7EB] text-[#6B7280] cursor-not-allowed border-2 border-transparent'
+                    }`}>
                   <Flame className="w-3.5 h-3.5" /> Masak ({selectedIds.size})
                 </button>
                 <button onClick={onToggleCookMode}
@@ -129,7 +126,7 @@ export default function LeftPanel({
 
       {/* FILTER TABS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-hide">
-        {['Semua','Segar','Waspada','Kritis','Busuk','Riwayat'].map(filter => (
+        {['Semua', 'Segar', 'Waspada', 'Kritis', 'Busuk', 'Riwayat'].map(filter => (
           <button key={filter} onClick={() => setActiveFilter(filter)}
             className={`px-4 sm:px-5 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all duration-200 btn-squish focus:outline-none ${activeFilter === filter ? t.filterActive : t.filterIdle}`}>
             {filter}
@@ -144,11 +141,10 @@ export default function LeftPanel({
             <div className="flex justify-end">
               <button
                 onClick={onClearAllHistory}
-                className={`flex items-center gap-1.5 px-4 py-2 text-xs font-extrabold rounded-full border-2 transition-all duration-200 btn-squish focus:outline-none ${
-                  isDark
+                className={`flex items-center gap-1.5 px-4 py-2 text-xs font-extrabold rounded-full border-2 transition-all duration-200 btn-squish focus:outline-none ${isDark
                     ? 'bg-red-950/40 border-red-800/50 text-red-400 hover:bg-red-950/70'
                     : 'bg-danger/10 border-danger/20 text-danger hover:bg-danger/20'
-                }`}
+                  }`}
               >
                 <Trash2 className="w-3.5 h-3.5" /> Hapus Semua
               </button>
@@ -187,20 +183,18 @@ export default function LeftPanel({
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className={`px-3 py-1 rounded-full text-xs font-black border-2 ${
-                    isDark ? 'bg-emerald-950/40 border-emerald-800/40 text-lime-400' : 'bg-success/10 border-success/20 text-success'
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-black border-2 ${isDark ? 'bg-emerald-950/40 border-emerald-800/40 text-lime-400' : 'bg-success/10 border-success/20 text-success'
+                    }`}>
                     +{h.xp_earned} XP 🎉
                   </span>
                   <button
                     onClick={() => onDeleteHistory(h.id)}
                     title="Hapus riwayat ini"
                     aria-label="Hapus riwayat ini"
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-transparent transition-all duration-200 active:scale-90 shrink-0 focus:outline-none ${
-                      isDark
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-transparent transition-all duration-200 active:scale-90 shrink-0 focus:outline-none ${isDark
                         ? 'text-stone-500 hover:text-red-400 hover:bg-red-950/40'
                         : 'text-[#6B7280] hover:text-danger hover:bg-danger/10 hover:border-danger/20'
-                    }`}
+                      }`}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -243,9 +237,8 @@ export default function LeftPanel({
                 <button
                   onClick={() => onDeleteWasteEntry(h.id)}
                   title="Hapus catatan ini"
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-transparent transition-all duration-200 active:scale-90 shrink-0 focus:outline-none ${
-                    isDark ? 'text-stone-500 hover:text-red-400 hover:bg-red-950/40' : 'text-[#6B7280] hover:text-danger hover:bg-danger/10 hover:border-danger/20'
-                  }`}>
+                  className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-transparent transition-all duration-200 active:scale-90 shrink-0 focus:outline-none ${isDark ? 'text-stone-500 hover:text-red-400 hover:bg-red-950/40' : 'text-[#6B7280] hover:text-danger hover:bg-danger/10 hover:border-danger/20'
+                    }`}>
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -255,8 +248,11 @@ export default function LeftPanel({
       )}
 
       {/* INGREDIENT LIST FROM PARENT */}
-      {/* PERBAIKAN BUG: Tampilkan IngredientList juga saat filter Busuk agar bahan expired (health=0) muncul */}
-      {activeFilter !== 'Riwayat' && activeFilter !== 'Busuk' && children}
+      {/* Selalu render children agar pantryStats tetap terhitung (termasuk saat filter Busuk).
+          Saat filter Busuk atau Riwayat, sembunyikan secara visual dengan 'hidden'. */}
+      <div className={activeFilter === 'Riwayat' || activeFilter === 'Busuk' ? 'hidden' : ''}>
+        {children}
+      </div>
     </section>
   )
 }

@@ -15,7 +15,7 @@ export default function IngredientCard({
   onWaste,
   onDelete,
 }) {
-  const expiryMs      = new Date(ing.expiryDate || ing.expiry_date).getTime()
+  const expiryMs = new Date(ing.expiryDate || ing.expiry_date).getTime()
   const remainingDays = Math.max(0, Math.ceil((expiryMs - Date.now()) / 86400000))
 
   return (
@@ -36,9 +36,8 @@ export default function IngredientCard({
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1 min-w-0 flex items-start gap-3">
           {isSelectable && (
-            <div className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
-              isSelected ? 'bg-primary border-primary text-white scale-110' : isDark ? 'border-zinc-500 bg-zinc-800' : 'border-border bg-white'
-            }`}>
+            <div className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${isSelected ? 'bg-primary border-primary text-white scale-110' : isDark ? 'border-zinc-500 bg-zinc-800' : 'border-border bg-white'
+              }`}>
               {isSelected && <Check className="w-3.5 h-3.5" strokeWidth={4} />}
             </div>
           )}
@@ -64,11 +63,11 @@ export default function IngredientCard({
             </div>
           </div>
         </div>
-        
+
         <div className="flex flex-col items-end gap-1.5 shrink-0">
-           <span className={`text-[9px] font-black px-2 py-1 rounded-xl border-2 ${statusInfo.color}`}>
-             {isCooked ? 'LOG AMAN' : statusInfo.label}
-           </span>
+          <span className={`text-[9px] font-black px-2 py-1 rounded-xl border-2 ${statusInfo.color}`}>
+            {isCooked ? 'LOG AMAN' : statusInfo.label}
+          </span>
         </div>
       </div>
 
@@ -87,15 +86,14 @@ export default function IngredientCard({
 
       {/* Waktu dimasak */}
       {isCooked && ing.updatedAt && (
-        <div className={`flex items-center gap-1.5 text-[9px] font-bold px-3 py-2 rounded-2xl border-2 mt-1 ${
-          isDark ? 'bg-emerald-950/40 border-emerald-900/40 text-emerald-400' : 'bg-primary/10 border-primary/20 text-primary'
-        }`}>
+        <div className={`flex items-center gap-1.5 text-[9px] font-bold px-3 py-2 rounded-2xl border-2 mt-1 ${isDark ? 'bg-emerald-950/40 border-emerald-900/40 text-emerald-400' : 'bg-primary/10 border-primary/20 text-primary'
+          }`}>
           <Clock className="w-3.5 h-3.5 text-secondary animate-pulse" />
           <span>Dimasak pada:</span>
           <span className="font-extrabold font-mono">
-            {new Date(ing.updatedAt).toLocaleDateString('id-ID', { weekday:'short', day:'2-digit', month:'short', year:'numeric' })}
+            {new Date(ing.updatedAt).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
             {' '}
-            {new Date(ing.updatedAt).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}
+            {new Date(ing.updatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
       )}
