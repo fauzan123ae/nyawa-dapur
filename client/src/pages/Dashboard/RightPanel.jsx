@@ -1,4 +1,4 @@
-import { FlameIcon, ShoppingBagIcon } from './icons'
+import { FlameIcon, ShoppingBagIcon } from '../../components/icons'
 import { Flame, Trophy, Award, ShoppingBag, Sparkles, BookOpen } from 'lucide-react'
 
 // =============================================

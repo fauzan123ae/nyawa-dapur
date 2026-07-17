@@ -1,4 +1,4 @@
-import { PencilIcon, TrashIcon } from './icons'
+import { PencilIcon, TrashIcon } from '../../components/icons'
 import { Leaf, Skull, Check, Flame, Trash2, Clock, Pencil, Sparkles } from 'lucide-react'
 
 // =============================================

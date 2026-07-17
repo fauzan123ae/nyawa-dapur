@@ -7,14 +7,14 @@ import { getCookingHistory, deleteHistoryEntry, clearAllHistory } from '../../ap
 import { getWasteHistory, deleteWasteEntry } from '../../api/wasteHistory'
 import { getMyHouseholds } from '../../api/household'
 import { useHistoryRealtime } from '../../hooks/useHistoryRealtime'
+import { useIngredientHealth } from '../../hooks/useIngredientHealth'
 
 import { themes } from './theme'
-import { FlameIcon } from './icons'
+import { FlameIcon, SunIcon } from '../../components/icons'
 import Header from './Header'
 import LeftPanel from './LeftPanel'
 import RightPanel from './RightPanel'
 import { ModalAdd, ModalEdit, ModalBatchCook, ModalCookAmount, ModalWasteAmount } from './Modals'
-import { useIngredientHealth } from './useIngredientHealth'
 import IngredientList from './IngredientList'
 
 const formatRow = (r) => ({

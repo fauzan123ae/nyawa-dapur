@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { FlameIcon, SunIcon, MoonIcon, MenuIcon, ChevronUpIcon } from './icons'
+import { FlameIcon, SunIcon, MoonIcon, MenuIcon, ChevronUpIcon } from '../../components/icons'
 import { Home, Sparkles } from 'lucide-react'
 
 // =============================================

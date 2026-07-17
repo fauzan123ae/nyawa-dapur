@@ -1,4 +1,4 @@
-import { PlusIcon } from './icons'
+import { PlusIcon } from '../../components/icons'
 import IngredientCard from './IngredientCard'
 import { Leaf, AlertTriangle, AlertCircle, Skull, Trash2, CheckSquare, Utensils, Flame, X, Clock } from 'lucide-react'
 
