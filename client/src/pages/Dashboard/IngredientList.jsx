@@ -25,23 +25,19 @@ const IngredientList = forwardRef(({
   householdId, currentUserId
 }, ref) => {
   const [ingredients, setIngredients] = useState([])
-  const [loading, setLoading] = useState(true)
 
   // Gunakan ref untuk onDataLoaded agar tidak masuk dependency array
   // dan tidak memicu re-render / infinite loop
   const onDataLoadedRef = useRef(onDataLoaded)
   useEffect(() => { onDataLoadedRef.current = onDataLoaded }, [onDataLoaded])
 
-  const fetchList = async (showLoading = false) => {
-    if (showLoading) setLoading(true)
+  const fetchList = async () => {
     try {
       const res = await getIngredients()
       const data = res.data.map(formatRow)
       setIngredients(data)
     } catch (err) {
       console.error(err)
-    } finally {
-      if (showLoading) setLoading(false)
     }
   }
 
@@ -63,12 +59,12 @@ const IngredientList = forwardRef(({
   })
 
   useEffect(() => {
-    fetchList(true)
-    // Naikkan interval dari 1 detik ke 30 detik — realtime sudah ditangani
-    // oleh useIngredientRealtime (Supabase), polling hanya sebagai fallback
+    fetchList()
+    // Polling 30 detik sebagai fallback — realtime sudah ditangani
+    // oleh useIngredientRealtime (Supabase)
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        fetchList(false)
+        fetchList()
       }
     }, 30_000)
     return () => clearInterval(interval)
@@ -111,13 +107,7 @@ const IngredientList = forwardRef(({
     onDataLoadedRef.current?.(ingredients, pantryStats)
   }, [ingredients, pantryStats])
 
-  if (loading) {
-    return (
-      <div className="flex justify-center p-8">
-        <div className={`w-6 h-6 border-2 rounded-full animate-spin ${isDark ? 'border-zinc-700 border-t-emerald-500' : 'border-green-200 border-t-green-500'}`} />
-      </div>
-    )
-  }
+
 
   return (
     <div className="flex flex-col gap-3">

@@ -52,7 +52,6 @@ export default function Dashboard() {
   const [wasteHistory, setWasteHistory] = useState([])
   const [pantryStats, setPantryStats] = useState({ segar: 0, layu: 0, sekarat: 0, busuk: 0 })
   const [now, setNow] = useState(new Date().toISOString())
-  const [pageLoading, setPageLoading] = useState(true)
 
   // ── UI state ──────────────────────────────
   const [activeFilter, setActiveFilter] = useState('Semua')
@@ -124,20 +123,19 @@ export default function Dashboard() {
   // ── Fetch ─────────────────────────────────
   const fetchDashboard = useCallback(async () => {
     try {
-      const [res, histRes, wasteRes] = await Promise.all([
-        getDashboard(),
-        getCookingHistory(),
-        getWasteHistory(),
-      ])
+      const res = await getDashboard()
       setUserData(res.data.userData)
       setQuests(res.data.questsData)
-      setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
-      setWasteHistory(Array.isArray(wasteRes.data) ? wasteRes.data : [])
     } catch (err) {
       console.error('Gagal fetch dashboard:', err)
-    } finally {
-      setPageLoading(false)
     }
+
+    // History di-load belakangan, tidak blocking UI
+    try {
+      const [histRes, wasteRes] = await Promise.all([getCookingHistory(), getWasteHistory()])
+      setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
+      setWasteHistory(Array.isArray(wasteRes.data) ? wasteRes.data : [])
+    } catch { }
   }, [activeHouseholdId])
 
   // Auto-detect personal household on first load
@@ -180,15 +178,18 @@ export default function Dashboard() {
     e.preventDefault()
     setIsAddSubmitting(true)
     setIsAddOpen(false)
-    triggerToast('Bahan masakan tersimpan!')
     const saved = { ...addForm }
     setAddForm({ name: '', qty: '', unit: 'gram', daysToExpiry: '3' })
     try {
-      await addIngredient({ name: saved.name, quantity: saved.qty, unit: saved.unit, days_to_expiry: saved.daysToExpiry })
-      const res = await getDashboard()
-      setUserData(res.data.userData)
-      setQuests(res.data.questsData)
-      ingredientListRef.current?.refresh()
+      const res = await addIngredient({ name: saved.name, quantity: saved.qty, unit: saved.unit, days_to_expiry: saved.daysToExpiry })
+      // Server sudah return ingredient baru di res.data.ingredient
+      // Langsung inject ke IngredientList tanpa fetch ulang
+      if (res.data?.ingredient) {
+        ingredientListRef.current?.setIngredients(prev => [res.data.ingredient, ...prev])
+      } else {
+        ingredientListRef.current?.refresh()  // fallback
+      }
+      triggerToast('Bahan masakan tersimpan!')
     } catch (err) {
       triggerToast(err.response?.data?.message || 'Gagal menambah bahan.', 'error')
     } finally {
@@ -243,12 +244,15 @@ export default function Dashboard() {
 
     try {
       await cookAmountIngredient(ing.id, amount)
-      const [res, histRes] = await Promise.all([getDashboard(), getCookingHistory()])
-      setUserData(res.data.userData); setQuests(res.data.questsData)
-      setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
       ingredientListRef.current?.refresh()
       if (remaining === 0) setActiveFilter('Riwayat')
       triggerToast(`🔥 ${amount} ${ing.unit} ${ing.name} dimasak! Sisa: ${remaining} ${ing.unit}.`)
+
+      // Sync XP/quests + history di background tanpa blocking UI
+      Promise.all([getDashboard(), getCookingHistory()]).then(([res, histRes]) => {
+        setUserData(res.data.userData); setQuests(res.data.questsData)
+        setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
+      }).catch(() => { })
     } catch (err) {
       triggerToast(err.response?.data?.message || 'Gagal memasak.', 'error')
     } finally {
@@ -278,10 +282,13 @@ export default function Dashboard() {
     try {
       const res = await cookBatchIngredients(payload)
       triggerToast(res.data?.message || `🔥 ${payload.length} bahan dimasak!`)
-      const [dash, histRes] = await Promise.all([getDashboard(), getCookingHistory()])
-      setUserData(dash.data.userData); setQuests(dash.data.questsData)
-      setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
       ingredientListRef.current?.refresh()
+
+      // Sync XP/quests + history di background tanpa blocking UI
+      Promise.all([getDashboard(), getCookingHistory()]).then(([dash, histRes]) => {
+        setUserData(dash.data.userData); setQuests(dash.data.questsData)
+        setCookingHistory(Array.isArray(histRes.data) ? histRes.data : [])
+      }).catch(() => { })
     } catch (err) {
       triggerToast(err.response?.data?.message || 'Gagal memasak.', 'error')
     } finally {
@@ -428,15 +435,6 @@ export default function Dashboard() {
     return 'Spark'
   }, [user])
 
-  // ── Loading screen ────────────────────────
-  if (pageLoading) return (
-    <div className={`min-h-screen flex items-center justify-center ${t.page}`}>
-      <div className="flex flex-col items-center gap-3">
-        <div className={`w-10 h-10 border-4 rounded-full animate-spin ${isDark ? 'border-zinc-700 border-t-emerald-500' : 'border-green-100 border-t-green-500'}`} />
-        <span className={`text-sm font-semibold ${isDark ? 'text-emerald-400' : 'text-green-700'}`}>Memuat dapur...</span>
-      </div>
-    </div>
-  )
 
   // ── Render ────────────────────────────────
   const sharedPanelProps = {
@@ -465,7 +463,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className={`min-h-screen font-sans selection:bg-green-200 selection:text-green-900 transition-colors duration-300 ${t.page}`}>
+    <div className={`min-h-screen font-sans selection:bg-[#F5D9C0] selection:text-[#3D2314] transition-colors duration-300 ${t.page}`}>
 
       <Header
         t={t} isDark={isDark} user={user} isFireLit={isFireLit} flameLevel={flameLevel}
@@ -473,12 +471,13 @@ export default function Dashboard() {
         toggleTheme={toggleTheme} logout={logout} activeHouseholdName={activeHouseholdName}
       />
 
-      {/* MOBILE TAB SWITCHER */}
-      <div className={`lg:hidden sticky top-[56px] z-30 px-4 py-2 border-b backdrop-blur-sm ${isDark ? 'bg-stone-900/90 border-zinc-800' : 'bg-white/90 border-gray-100'}`}>
-        <div className={`flex rounded-xl p-1 gap-1 ${isDark ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+      <div className={`lg:hidden sticky top-[56px] z-30 px-4 py-2 border-b-2 backdrop-blur-md ${t.header}`}>
+        <div className={`flex rounded-xl p-1 gap-1 ${isDark ? 'bg-[#2E1C0E]' : 'bg-[#FFF0E3]'}`}>
           {[['pantry', '🍃 Pantri'], ['dapur', '🔥 Dapur & Misi']].map(([val, label]) => (
             <button key={val} onClick={() => setMobileTab(val)}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mobileTab === val ? (isDark ? 'bg-emerald-600 text-white' : 'bg-green-600 text-white') : (isDark ? 'text-stone-400' : 'text-gray-500')}`}>
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${mobileTab === val
+                ? t.filterActive
+                : t.filterIdle}`}>
               {label}
             </button>
           ))}

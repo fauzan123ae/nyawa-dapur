@@ -44,8 +44,8 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
           <button onClick={() => navigate('/kitchen-select')} className={`px-4 py-1.5 rounded-full border-2 text-xs font-extrabold flex items-center gap-1.5 transition-all duration-200 focus:outline-none ${t.toggleBtn}`} title="Ganti Dapur" aria-label="Ganti Dapur">
             <Home className="w-3.5 h-3.5" /> <span className="max-w-[100px] truncate">{activeHouseholdName || 'Dapur'}</span>
             {realtimeStatus && (
-              <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] ml-1 transition-opacity ${realtimeStatus === 'connected' ? 'bg-success/10 text-success' : 'bg-gray-500/10 text-gray-500'} opacity-90`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${realtimeStatus === 'connected' ? 'bg-success' : 'bg-gray-500'}`}></span>
+              <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] ml-1 transition-opacity ${realtimeStatus === 'connected' ? 'bg-[#6DCBA0]/10 text-[#6DCBA0]' : `${isDark ? 'bg-[#4A2E18]/60 text-[#C4956A]' : 'bg-[#F5D9C0]/60 text-[#A07856]'}`} opacity-90`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${realtimeStatus === 'connected' ? 'bg-[#6DCBA0]' : isDark ? 'bg-[#4A2E18]' : 'bg-[#C4A882]'}`}></span>
                 {realtimeStatus === 'connected' ? 'Live' : ''}
               </span>
             )}
@@ -72,7 +72,7 @@ export default function Header({ t, isDark, user, isFireLit, flameLevel, mobileM
       </div>
 
       {/* Mobile dropdown */}
-      <div className={`sm:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'max-h-48 opacity-100 mt-3 pt-3 border-t-2' : 'max-h-0 opacity-0'} border-border`}>
+      <div className={`sm:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? `max-h-48 opacity-100 mt-3 pt-3 border-t-2 ${t.divider}` : 'max-h-0 opacity-0'}`}>
         <div className="flex flex-wrap gap-2 justify-between items-center px-1">
           <div className="flex gap-2">
             <div className={`px-3.5 py-1.5 rounded-full border-2 text-xs flex items-center shadow-sm ${t.pill}`}><span className="text-sm mr-1">🪵</span> <span className="font-extrabold">{user.firewood || 0} Kayu</span></div>

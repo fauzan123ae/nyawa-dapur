@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 // ── Modal Tambah Bahan ──────────────────────
 export function ModalAdd({ t, isDark, isOpen, onClose, onSubmit, form, setForm, isSubmitting }) {
   if (!isOpen) return null
-  const inputClass = `w-full rounded-xl px-4 py-2.5 text-sm border focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all ${t.modalInput}`
+  const inputClass = `w-full rounded-xl px-4 py-2.5 text-base border focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all ${t.modalInput}`
   return (
     <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm ${t.modalOverlay}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
@@ -54,7 +54,7 @@ export function ModalAdd({ t, isDark, isOpen, onClose, onSubmit, form, setForm, 
 // ── Modal Edit Bahan ────────────────────────
 export function ModalEdit({ t, isDark, isOpen, ingredient, onClose, onSubmit, form, setForm, isSubmitting }) {
   if (!isOpen || !ingredient) return null
-  const inputClass = `w-full rounded-xl px-4 py-2.5 text-sm border focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all ${t.modalInput}`
+  const inputClass = `w-full rounded-xl px-4 py-2.5 text-base border focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all ${t.modalInput}`
   return (
     <div className={`fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm ${t.modalOverlay}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
@@ -171,7 +171,7 @@ export function ModalBatchCook({ t, isDark, isOpen, selectedIds, ingredients, is
                     <p className={`text-[10px] ${isDark ? 'text-stone-500' : 'text-gray-400'}`}>Stok: {i.quantity} {i.unit}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2.5 shrink-0">
                   <div className="flex items-center gap-1.5">
                     <div className={`flex items-center rounded-lg py-0.5 px-1.5 gap-1.5 border ${t.qtyBox}`}>
@@ -183,7 +183,7 @@ export function ModalBatchCook({ t, isDark, isOpen, selectedIds, ingredients, is
                       >
                         −
                       </button>
-                      
+
                       <input
                         type="number"
                         step="any"
@@ -192,9 +192,9 @@ export function ModalBatchCook({ t, isDark, isOpen, selectedIds, ingredients, is
                         value={currentAmount}
                         onChange={(e) => updateAmount(i.id, e.target.value)}
                         onBlur={() => handleBlur(i.id, i.quantity)}
-                        className={`w-12 text-center text-xs font-mono font-bold focus:outline-none bg-transparent ${t.qtyText}`}
+                        className={`w-12 text-center text-base font-mono font-bold focus:outline-none bg-transparent ${t.qtyText}`}
                       />
-                      
+
                       <button
                         type="button"
                         onClick={() => handlePlus(i.id, i.quantity)}
@@ -206,7 +206,7 @@ export function ModalBatchCook({ t, isDark, isOpen, selectedIds, ingredients, is
                     </div>
                     <span className={`text-[10px] font-bold ${isDark ? 'text-stone-400' : 'text-gray-500'}`}>{i.unit}</span>
                   </div>
-                  
+
                   <button
                     type="button"
                     onClick={() => onToggleSelect(i.id)}
@@ -260,7 +260,7 @@ export function ModalCookAmount({ t, isDark, ingredient, value, onChange, onClos
             <label className={`block text-xs font-bold mb-1.5 ${t.modalLabel}`}>Jumlah yang dimasak ({ingredient.unit})</label>
             <input type="number" step="any" min="0.01" max={ingredient.quantity}
               value={value} onChange={e => onChange(e.target.value)}
-              className={`w-full rounded-xl px-4 py-2.5 text-sm border focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${t.modalInput}`}
+              className={`w-full rounded-xl px-4 py-2.5 text-base border focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${t.modalInput}`}
               autoFocus required />
           </div>
           {value && !isNaN(parseFloat(value)) && parseFloat(value) > 0 && (
@@ -277,9 +277,8 @@ export function ModalCookAmount({ t, isDark, ingredient, value, onChange, onClos
               if (val <= 0) return null
               return (
                 <button type="button" key={frac} onClick={() => onChange(String(val))}
-                  className={`px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all duration-200 active:scale-95 ${
-                    isDark ? 'bg-[#222B27] border-[#34413B] text-[#B8C1BA] hover:border-[#7BAE7F] hover:text-[#7BAE7F]' : 'bg-cream border-border text-gray-600 hover:border-accent hover:text-primary'
-                  }`}>
+                  className={`px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all duration-200 active:scale-95 ${isDark ? 'bg-[#222B27] border-[#34413B] text-[#B8C1BA] hover:border-[#7BAE7F] hover:text-[#7BAE7F]' : 'bg-cream border-border text-gray-600 hover:border-accent hover:text-primary'
+                    }`}>
                   {frac === 1 ? 'Semua' : frac === 0.5 ? '½' : '¼'} ({val} {ingredient.unit})
                 </button>
               )
@@ -367,7 +366,7 @@ export function ModalWasteAmount({ open, ing, t, isDark, onClose, onConfirm }) {
                   max={ing.quantity}
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
-                  className="w-full text-center text-sm font-mono font-bold focus:outline-none bg-transparent text-gray-800 dark:text-stone-200"
+                  className="w-full text-center text-base font-mono font-bold focus:outline-none bg-transparent text-gray-800 dark:text-stone-200"
                   required
                   autoFocus
                 />

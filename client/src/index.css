@@ -2,16 +2,32 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #C2714F;       /* Pokémon Café caramel brown */
-  --color-secondary: #E8956A;     /* Warm peach biscuit */
-  --color-accent: #F5C842;        /* Custard yellow */
-  --color-success: #6DCBA0;       /* Mint sorbet green */
-  --color-warning: #F5C842;       /* Honey yellow */
-  --color-danger: #FF8B8B;        /* Strawberry pastel red */
-  --color-cream: #FFF8F0;         /* Café vanilla cream */
+  --color-primary: #C2714F;
+  /* Pokémon Café caramel brown */
+  --color-secondary: #E8956A;
+  /* Warm peach biscuit */
+  --color-accent: #F5C842;
+  /* Custard yellow */
+  --color-success: #6DCBA0;
+  /* Mint sorbet green */
+  --color-warning: #F5C842;
+  /* Honey yellow */
+  --color-danger: #FF8B8B;
+  /* Strawberry pastel red */
+  --color-cream: #FFF8F0;
+  /* Café vanilla cream */
   --color-surface: #FFFFFF;
-  --color-muted: #C4A882;         /* Warm latte brown */
-  --color-border: #F5D9C0;        /* Soft peach border */
+  --color-muted: #C4A882;
+  /* Warm latte brown */
+  --color-border: #F5D9C0;
+  /* Soft peach border */
+}
+
+/* Prevent iOS/Android auto-zoom when tapping input fields */
+input,
+select,
+textarea {
+  font-size: max(16px, 1em);
 }
 
 body {
@@ -23,74 +39,154 @@ body {
 }
 
 /* Scrollbar hide utility */
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
 /* Cute micro-animations */
 @keyframes sway {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(8deg) translateY(-2px); }
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(8deg) translateY(-2px);
+  }
 }
+
 .animate-sway {
   display: inline-block;
   animation: sway 3s ease-in-out infinite;
 }
 
 @keyframes bounceCute {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-6px) scale(1.02); }
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-6px) scale(1.02);
+  }
 }
+
 .animate-bounce-cute {
   animation: bounceCute 2s ease-in-out infinite;
 }
 
 @keyframes squish {
-  0% { transform: scale(1); }
-  30% { transform: scale(0.92, 0.92); }
-  60% { transform: scale(1.04, 1.04); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  30% {
+    transform: scale(0.92, 0.92);
+  }
+
+  60% {
+    transform: scale(1.04, 1.04);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
+
 .btn-squish:active {
   animation: squish 0.3s ease-in-out;
 }
 
 @keyframes steam {
-  0% { transform: translateY(2px) scale(0.9); opacity: 0.3; }
-  50% { transform: translateY(-4px) scale(1.1); opacity: 0.8; }
-  100% { transform: translateY(-8px) scale(1.2); opacity: 0; }
+  0% {
+    transform: translateY(2px) scale(0.9);
+    opacity: 0.3;
+  }
+
+  50% {
+    transform: translateY(-4px) scale(1.1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateY(-8px) scale(1.2);
+    opacity: 0;
+  }
 }
+
 .animate-steam {
   animation: steam 1.5s ease-in-out infinite;
 }
 
 @keyframes floatSlow {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-8px) rotate(3deg); }
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+  }
 }
+
 .animate-float-slow {
   animation: floatSlow 4s ease-in-out infinite;
 }
 
 /* Adorable scale up modal entrance */
 @keyframes scaleUpCute {
-  0% { transform: scale(0.9) translateY(10px); opacity: 0; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
+  0% {
+    transform: scale(0.9) translateY(10px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
+
 .animate-scale-cute {
   animation: scaleUpCute 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes scaleUp {
-  0% { transform: scale(0.92) translateY(8px); opacity: 0; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
+  0% {
+    transform: scale(0.92) translateY(8px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Grow plant success animation */
 @keyframes growPlant {
-  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
-  70% { transform: scale(1.2) rotate(5deg); }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-10deg);
+    opacity: 0;
+  }
+
+  70% {
+    transform: scale(1.2) rotate(5deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
+
 .animate-grow {
   animation: growPlant 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
