@@ -81,7 +81,7 @@ const IngredientList = forwardRef(({
 
   const filteredIngredients = useMemo(() => {
     return ingredients.filter(i => {
-      if (activeFilter === 'Busuk') return i.status === 'wasted' || (i.status === 'active' && calculateIngredientHealth(i) <= 0)
+      if (activeFilter === 'Busuk') return i.status === 'wasted'
       if (i.status !== 'active') return false
       if (activeFilter === 'Semua') return true
       return getHealthStatus(calculateIngredientHealth(i)).label === activeFilter
@@ -91,13 +91,15 @@ const IngredientList = forwardRef(({
   const pantryStats = useMemo(() => {
     let segar = 0, layu = 0, sekarat = 0, busuk = 0
     ingredients.forEach(i => {
+      // Busuk = hanya yang ditandai busuk manual (status wasted)
+      // Bahan expired (health <= 0) tetap masuk Kritis, bukan Busuk
       if (i.status === 'wasted') { busuk++; return }
       if (i.status !== 'active') return
-      const s = getHealthStatus(calculateIngredientHealth(i)).label
+      const health = calculateIngredientHealth(i)
+      const s = getHealthStatus(health).label
       if (s === 'Segar') segar++
-      if (s === 'Waspada') layu++
-      if (s === 'Kritis') sekarat++
-      if (s === 'Busuk') busuk++
+      else if (s === 'Waspada') layu++
+      else sekarat++ // Kritis atau expired (health <= 0) masuk Kritis
     })
     return { segar, layu, sekarat, busuk }
   }, [ingredients, calculateIngredientHealth, getHealthStatus])
@@ -128,7 +130,7 @@ const IngredientList = forwardRef(({
           {filteredIngredients.map(ing => {
             const health = calculateIngredientHealth(ing)
             const statusInfo = getHealthStatus(health)
-            const isWasted = ing.status === 'wasted' || (ing.status === 'active' && health <= 0)
+            const isWasted = ing.status === 'wasted'
             const isCooked = ing.status === 'cooked'
             return (
               <IngredientCard
