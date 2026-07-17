@@ -149,7 +149,7 @@ export default function HouseholdModal({ isOpen, onClose, t, isDark, onRefreshDa
                       Gabung Dapur
                     </button>
                     <button onClick={() => { setActiveTab('create'); setErrorMsg('') }}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${activeTab === 'create' ? (isDark ? 'bg-[#7BAE7F] text-[#121714]' : 'bg-primary text-white shadow-sm') : (isDark ? 'text-stone-400' : 'text-gray-500')}`}>
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-200 ${activeTab === 'create' ? (isDark ? 'bg-[#F5A96A] text-[#1C1008]' : 'bg-primary text-white shadow-sm') : (isDark ? 'text-stone-400' : 'text-gray-500')}`}>
                       Buat Dapur
                     </button>
                   </div>
@@ -185,7 +185,7 @@ export default function HouseholdModal({ isOpen, onClose, t, isDark, onRefreshDa
               <div className="flex flex-col gap-4 animate-[fadeIn_0.15s_ease-out]">
                 <div className={`p-4 rounded-2xl border flex justify-between items-center ${isDark ? 'bg-zinc-900/60 border-zinc-700' : 'bg-cream border-border'}`}>
                   <div>
-                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isDark ? 'text-[#7BAE7F]' : 'text-primary'}`}>Dapur Aktif</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isDark ? 'text-[#F5A96A]' : 'text-primary'}`}>Dapur Aktif</p>
                     <h4 className={`text-base font-black ${t.modalTitle}`}>{data.household?.name}</h4>
                   </div>
                   <div className="text-right">
@@ -201,7 +201,7 @@ export default function HouseholdModal({ isOpen, onClose, t, isDark, onRefreshDa
                   <h5 className={`text-xs font-bold mb-2.5 flex items-center gap-1 ${t.modalLabel}`}>
                     <Users className="w-3.5 h-3.5" /> Anggota Dapur ({data.members.length})
                   </h5>
-                  <div className={`rounded-xl border divide-y overflow-hidden max-h-48 overflow-y-auto ${isDark ? 'border-zinc-700 divide-zinc-700 bg-zinc-950/20' : 'border-border divide-gray-100 bg-[#F8F7F2]'}`}>
+                  <div className={`rounded-xl border divide-y overflow-hidden max-h-48 overflow-y-auto ${isDark ? 'border-zinc-700 divide-zinc-700 bg-zinc-950/20' : 'border-border divide-gray-100 bg-[#FFF0E3]'}`}>
                     {data.members.map(m => {
                       const lastActive = m.last_active_at ? new Date(m.last_active_at) : null
                       const isActive = lastActive && (now - lastActive) < 24 * 60 * 60 * 1000
@@ -219,7 +219,7 @@ export default function HouseholdModal({ isOpen, onClose, t, isDark, onRefreshDa
                           </div>
                           <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${
                             m.role === 'owner' 
-                              ? (isDark ? 'bg-[#7BAE7F]/10 border-[#7BAE7F]/30 text-[#7BAE7F]' : 'bg-primary/10 border-primary/20 text-primary')
+                              ? (isDark ? 'bg-[#F5A96A]/10 border-[#F5A96A]/30 text-[#F5A96A]' : 'bg-primary/10 border-primary/20 text-primary')
                               : (isDark ? 'bg-zinc-800 border-zinc-700 text-stone-400' : 'bg-white border-border text-gray-500')
                           }`}>
                             {m.role === 'owner' ? 'Owner' : 'Anggota'}

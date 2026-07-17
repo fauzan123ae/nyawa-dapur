@@ -43,10 +43,10 @@ export default function Register() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] dark:bg-[#121714] flex flex-col lg:flex-row transition-colors duration-300">
+    <div className="min-h-screen bg-[#FFFDF9] dark:bg-[#1C1008] flex flex-col lg:flex-row transition-colors duration-300">
       
       {/* Left Column / Mobile Top Hero Banner */}
-      <div className="w-full lg:w-1/2 h-[260px] lg:h-auto bg-gradient-to-br from-primary via-[#74C69D] to-cream dark:from-[#1B221F] dark:via-[#222B27] dark:to-[#121714] relative overflow-hidden flex flex-col justify-between p-6 lg:p-12 text-white border-b-2 lg:border-b-0 lg:border-r-2 border-border dark:border-[#34413B] shrink-0">
+      <div className="w-full lg:w-1/2 h-[260px] lg:h-auto bg-gradient-to-br from-primary via-[#E8956A] to-cream dark:from-[#1B221F] dark:via-[#222B27] dark:to-[#121714] relative overflow-hidden flex flex-col justify-between p-6 lg:p-12 text-white border-b-2 lg:border-b-0 lg:border-r-2 border-border dark:border-[#4A2E18] shrink-0">
         {/* Animated nature details */}
         <div className="absolute top-4 right-10 text-white/10 text-7xl lg:text-9xl pointer-events-none select-none">🍃</div>
         <div className="absolute top-1/4 right-8 lg:right-20 animate-bounce text-xl lg:text-2xl" style={{ animationDuration: '4.5s' }}>🦋</div>
@@ -73,7 +73,7 @@ export default function Register() {
           <div className="p-2 bg-white/15 rounded-xl backdrop-blur-sm shadow-sm">
             <span className="text-xl">🍲</span>
           </div>
-          <span className="text-base lg:text-xl font-black tracking-tight text-white dark:text-[#7BAE7F]">Nyawa Dapur</span>
+          <span className="text-base lg:text-xl font-black tracking-tight text-white dark:text-[#F5A96A]">Nyawa Dapur</span>
         </div>
 
         {/* Desktop Title & Intro */}
@@ -105,10 +105,10 @@ export default function Register() {
 
       {/* Right Column / Register Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16">
-        <div className={`w-full max-w-md bg-white dark:bg-[#1B221F] border-2 border-border dark:border-[#34413B] rounded-[2rem] p-8 sm:p-10 shadow-xl transition-all duration-300 ${shake ? 'animate-shake' : ''}`}>
+        <div className={`w-full max-w-md bg-white dark:bg-[#261608] border-2 border-border dark:border-[#4A2E18] rounded-[2rem] p-8 sm:p-10 shadow-xl transition-all duration-300 ${shake ? 'animate-shake' : ''}`}>
           
           <div className="flex items-center gap-2 mb-6">
-            <h1 className="text-xl sm:text-2xl font-black text-primary dark:text-[#7BAE7F] tracking-tight">Daftar Akun Baru</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-primary dark:text-[#F5A96A] tracking-tight">Daftar Akun Baru</h1>
           </div>
 
           {error && (
@@ -121,14 +121,14 @@ export default function Register() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {fields.map(({ key, type, placeholder, icon }) => (
               <div className="relative" key={key}>
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted dark:text-[#B8C1BA]">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted dark:text-[#C4956A]">
                   {icon}
                 </span>
                 <input
                   type={type} placeholder={placeholder} required
                   value={form[key]}
                   onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                  className="w-full bg-[#FFFDF9] dark:bg-[#222B27] border-2 border-border dark:border-[#34413B] rounded-2xl pl-10 pr-4 py-3 text-gray-800 dark:text-[#F5F5F4] text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#7BAE7F]/10 focus:border-primary dark:focus:border-[#7BAE7F] transition-all duration-200"
+                  className="w-full bg-[#FFFDF9] dark:bg-[#2E1C0E] border-2 border-border dark:border-[#4A2E18] rounded-2xl pl-10 pr-4 py-3 text-gray-800 dark:text-[#F5E6D3] text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#F5A96A]/10 focus:border-primary dark:focus:border-[#F5A96A] transition-all duration-200"
                 />
               </div>
             ))}
@@ -142,9 +142,9 @@ export default function Register() {
             </button>
           </form>
 
-          <p className="text-xs text-muted dark:text-[#B8C1BA] text-center mt-6 font-bold">
+          <p className="text-xs text-muted dark:text-[#C4956A] text-center mt-6 font-bold">
             Sudah memiliki akun?{' '}
-            <Link to="/login" className="text-primary dark:text-[#7BAE7F] font-black hover:underline">Masuk</Link>
+            <Link to="/login" className="text-primary dark:text-[#F5A96A] font-black hover:underline">Masuk</Link>
           </p>
         </div>
       </div>

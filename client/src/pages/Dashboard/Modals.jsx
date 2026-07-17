@@ -226,7 +226,7 @@ export function ModalBatchCook({ t, isDark, isOpen, selectedIds, ingredients, is
         <div className="flex gap-2.5">
           <button onClick={onClose} className={`w-1/2 py-2.5 font-bold rounded-xl transition-all text-sm ${t.modalCancel}`}>Batal</button>
           <button onClick={handleConfirmClick} disabled={isBatchCooking || selectedIds.size === 0}
-            className="w-1/2 py-2.5 font-bold rounded-xl transition-all text-sm bg-orange-500 hover:bg-orange-400 text-white shadow-sm disabled:opacity-50">
+            className={`w-1/2 py-2.5 font-bold text-sm disabled:opacity-50 ${t.cookBtn}`}>
             {isBatchCooking ? 'Memasak...' : `🔥 Masak ${selectedIds.size} Bahan`}
           </button>
         </div>
@@ -288,7 +288,7 @@ export function ModalCookAmount({ t, isDark, ingredient, value, onChange, onClos
           <div className="flex gap-2.5 mt-2">
             <button type="button" onClick={onClose} className={`w-1/2 py-3 font-bold rounded-xl text-sm transition-all duration-200 ${t.modalCancel}`}>Batal</button>
             <button type="submit" disabled={isCooking}
-              className="w-1/2 py-3 font-bold rounded-xl text-sm transition-all duration-200 active:scale-95 bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-accent text-white shadow-sm disabled:opacity-50">
+              className={`w-1/2 py-3 font-bold text-sm disabled:opacity-50 ${t.cookBtn}`}>
               {isCooking ? 'Memasak...' : '🔥 Masak'}
             </button>
           </div>

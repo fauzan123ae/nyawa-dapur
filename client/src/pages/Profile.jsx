@@ -228,7 +228,7 @@ export default function Profile() {
               <div className="flex flex-col gap-4">
                 <div className={`p-4 rounded-2xl border flex justify-between items-center ${isDark ? 'bg-zinc-900/60 border-zinc-700' : 'bg-cream border-border'}`}>
                   <div>
-                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isDark ? 'text-[#7BAE7F]' : 'text-primary'}`}>Dapur Aktif</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isDark ? 'text-[#F5A96A]' : 'text-primary'}`}>Dapur Aktif</p>
                     <h4 className={`text-sm font-black ${isDark ? 'text-stone-200' : 'text-gray-800'}`}>{household?.name}</h4>
                   </div>
                   <div className="text-right">
@@ -257,7 +257,7 @@ export default function Profile() {
                         </div>
                         <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${
                           m.role === 'owner' 
-                            ? (isDark ? 'bg-[#7BAE7F]/10 border-[#7BAE7F]/30 text-[#7BAE7F]' : 'bg-primary/10 border-primary/20 text-primary')
+                            ? (isDark ? 'bg-[#F5A96A]/10 border-[#F5A96A]/30 text-[#F5A96A]' : 'bg-primary/10 border-primary/20 text-primary')
                             : (isDark ? 'bg-zinc-800 border-zinc-600 text-stone-450' : 'bg-white border-border text-gray-500')
                         }`}>
                           {m.role === 'owner' ? 'Owner' : 'Anggota'}

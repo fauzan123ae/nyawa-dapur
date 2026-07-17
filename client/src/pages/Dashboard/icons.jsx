@@ -4,8 +4,8 @@ export const SunIcon = ({ className }) => <Sun className={className || "w-4 h-4"
 export const MoonIcon = ({ className }) => <Moon className={className || "w-4 h-4"} />;
 
 export const FlameIcon = ({ className, level = 'Spark', isLit = true }) => {
-  let strokeColor = '#2F5D50'; // primary green
-  let glowColor = 'rgba(47, 93, 80, 0.4)';
+  let strokeColor = '#F4A261'; // warm peach-amber (Pokémon Café Mix)
+  let glowColor = 'rgba(244, 162, 97, 0.5)';
   
   if (!isLit) {
     strokeColor = '#94a3b8';

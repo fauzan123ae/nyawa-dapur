@@ -86,8 +86,7 @@ export default function LeftPanel({
             {!isCookMode ? (
               <>
                 <button onClick={onToggleCookMode}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 font-extrabold rounded-xl transition-all duration-200 text-xs flex-1 sm:flex-none justify-center btn-squish border-2 focus:outline-none ${isDark ? 'bg-[#7BAE7F]/20 border-[#7BAE7F]/40 text-[#7BAE7F]' : 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
-                    }`}>
+                  className={`flex items-center gap-1.5 px-4 py-2.5 font-extrabold rounded-xl transition-all duration-200 text-xs flex-1 sm:flex-none justify-center btn-squish border-2 focus:outline-none ${t.cookBtn}`}>
                   <Utensils className="w-3.5 h-3.5" /> Mulai Masak 🍳
                 </button>
                 <button onClick={onOpenAddModal}
@@ -98,17 +97,15 @@ export default function LeftPanel({
             ) : (
               <>
                 <button onClick={onSelectAllActive}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center border-2 transition-all duration-200 btn-squish focus:outline-none ${isDark ? 'bg-zinc-800 border-[#34413B] text-stone-300' : 'bg-[#F8F7F2] border-border text-[#1F2937] hover:bg-[#E5E7EB]'
-                    }`}>
+                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center border-2 transition-all duration-200 btn-squish focus:outline-none ${t.modalCancel}`}>
                   <CheckSquare className="w-3.5 h-3.5" /> Pilih Semua
                 </button>
                 <button onClick={onOpenCookModal} disabled={selectedIds.size === 0}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center transition-all duration-200 btn-squish focus:outline-none ${selectedIds.size > 0 ? 'bg-gradient-to-r from-secondary to-accent text-white shadow-sm' : isDark ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border-2 border-transparent' : 'bg-[#E5E7EB] text-[#6B7280] cursor-not-allowed border-2 border-transparent'
-                    }`}>
+                  className={`flex items-center gap-1.5 px-3 py-2.5 font-extrabold rounded-xl text-xs flex-1 justify-center transition-all duration-200 btn-squish focus:outline-none ${selectedIds.size > 0 ? t.cookBtn : t.shopBtnOff}`}>
                   <Flame className="w-3.5 h-3.5" /> Masak ({selectedIds.size})
                 </button>
                 <button onClick={onToggleCookMode}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-bold border-2 transition-all duration-200 btn-squish focus:outline-none ${isDark ? 'bg-zinc-800 border-[#34413B] text-stone-400' : 'bg-white border-border text-[#6B7280]'}`} aria-label="Tutup Mode Masak">
+                  className={`px-3 py-2.5 rounded-xl text-xs font-bold border-2 transition-all duration-200 btn-squish focus:outline-none ${t.modalCancel}`} aria-label="Tutup Mode Masak">
                   <X className="w-4 h-4" />
                 </button>
               </>
@@ -117,7 +114,7 @@ export default function LeftPanel({
         </div>
 
         {isCookMode && (
-          <div className={`rounded-2xl px-4 py-3 text-xs font-extrabold flex items-center gap-2 border-2 ${isDark ? 'bg-[#7BAE7F]/10 border-[#7BAE7F]/20 text-[#7BAE7F]' : 'bg-primary/10 border-primary/20 text-primary animate-pulse'}`}>
+          <div className={`rounded-2xl px-4 py-3 text-xs font-extrabold flex items-center gap-2 border-2 ${isDark ? 'bg-[#F5A96A]/10 border-[#F5A96A]/20 text-[#F5A96A]' : 'bg-primary/10 border-primary/20 text-primary animate-pulse'}`}>
             <Utensils className="w-4 h-4" />
             <span>Mode Masak aktif — centang bahan yang ingin dimasak, lalu tekan <strong>Masak ({selectedIds.size})</strong></span>
           </div>
@@ -183,7 +180,7 @@ export default function LeftPanel({
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className={`px-3 py-1 rounded-full text-xs font-black border-2 ${isDark ? 'bg-emerald-950/40 border-emerald-800/40 text-lime-400' : 'bg-success/10 border-success/20 text-success'
+                  <span className={`px-3 py-1 rounded-full text-xs font-black border-2 ${isDark ? 'bg-[#F5A96A]/15 border-[#F5A96A]/40 text-[#F5A96A]' : 'bg-success/10 border-success/20 text-success'
                     }`}>
                     +{h.xp_earned} XP 🎉
                   </span>

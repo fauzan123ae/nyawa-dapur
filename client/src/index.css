@@ -2,21 +2,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #52B788;       /* Bright pastel mint */
-  --color-secondary: #FF9F1C;     /* Cheerful warm orange */
-  --color-accent: #FFD166;        /* Soft honey yellow */
-  --color-success: #70E000;       /* Fresh bright sprout green */
-  --color-warning: #FFB703;       /* Cute sunshine yellow */
-  --color-danger: #FF6B6B;        /* Cute pastel strawberry red */
-  --color-cream: #FFFDF9;         /* Cozy Japanese cafe vanilla cream */
+  --color-primary: #C2714F;       /* Pokémon Café caramel brown */
+  --color-secondary: #E8956A;     /* Warm peach biscuit */
+  --color-accent: #F5C842;        /* Custard yellow */
+  --color-success: #6DCBA0;       /* Mint sorbet green */
+  --color-warning: #F5C842;       /* Honey yellow */
+  --color-danger: #FF8B8B;        /* Strawberry pastel red */
+  --color-cream: #FFF8F0;         /* Café vanilla cream */
   --color-surface: #FFFFFF;
-  --color-muted: #8E9AAF;         /* Soft slate blue-gray */
-  --color-border: #F3EFE9;        /* Warm soft border */
+  --color-muted: #C4A882;         /* Warm latte brown */
+  --color-border: #F5D9C0;        /* Soft peach border */
 }
 
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background-color: #FFFDF9;
+  background-color: #FFF8F0;
   color: #2F3E46;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

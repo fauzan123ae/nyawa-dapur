@@ -86,7 +86,7 @@ export default function IngredientCard({
 
       {/* Waktu dimasak */}
       {isCooked && ing.updatedAt && (
-        <div className={`flex items-center gap-1.5 text-[9px] font-bold px-3 py-2 rounded-2xl border-2 mt-1 ${isDark ? 'bg-emerald-950/40 border-emerald-900/40 text-emerald-400' : 'bg-primary/10 border-primary/20 text-primary'
+        <div className={`flex items-center gap-1.5 text-[9px] font-bold px-3 py-2 rounded-2xl border-2 mt-1 ${isDark ? 'bg-[#F5A96A]/10 border-[#F5A96A]/30 text-[#F5A96A]' : 'bg-primary/10 border-primary/20 text-primary'
           }`}>
           <Clock className="w-3.5 h-3.5 text-secondary animate-pulse" />
           <span>Dimasak pada:</span>
