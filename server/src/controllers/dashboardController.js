@@ -58,13 +58,34 @@ export async function buyFirewood(req, res) {
 export async function igniteWood(req, res) {
   const user = req.user
   if (user.firewood < 1) return res.status(422).json({ message: 'Tidak ada kayu bakar.' })
+
   const now = getSimulatedNow(user.id)
+  const lastActive = user.last_active_at ? dayjs(user.last_active_at) : null
+
+  // Sudah nyalakan api hari ini — tidak perlu update streak lagi
+  if (lastActive && lastActive.isSame(now, 'day')) {
+    return res.status(422).json({ message: 'Api sudah dinyalakan hari ini.' })
+  }
+
+  // Hitung streak baru saat nyalakan api:
+  // - Belum pernah aktif → mulai dari 1
+  // - Aktif kemarin (selisih 1 hari) → streak naik
+  // - Absen 2+ hari → reset ke 1 (bukan 0, karena hari ini aktif)
+  let newStreak = 1
+  if (lastActive) {
+    const daysDiff = now.startOf('day').diff(lastActive.startOf('day'), 'day')
+    if (daysDiff === 1) {
+      newStreak = (user.current_streak || 0) + 1
+    }
+    // daysDiff >= 2 → newStreak tetap 1 (reset)
+  }
+
   await query(
-    'UPDATE users SET firewood=firewood-1,last_active_at=$1,updated_at=NOW() WHERE id=$2',
-    [now.toISOString(), user.id]
+    'UPDATE users SET firewood=firewood-1, last_active_at=$1, current_streak=$2, updated_at=NOW() WHERE id=$3',
+    [now.toISOString(), newStreak, user.id]
   )
   invalidateUserCache(user.id)
-  return res.json({ message: 'Api berhasil dinyalakan!' })
+  return res.json({ message: 'Api berhasil dinyalakan!', newStreak })
 }
 
 export async function nextDay(req, res) {
@@ -72,26 +93,9 @@ export async function nextDay(req, res) {
   const current = getSimulatedNow(user.id)
   const next    = current.add(1, 'day')
 
-  // Hitung streak SEBELUM maju hari:
-  // Jika last_active_at ada di hari "current" (hari yang sedang berjalan),
-  // artinya user aktif hari ini → streak naik.
-  // Jika tidak aktif hari ini → streak reset 0.
-  const wasActiveToday = user.last_active_at
-    ? dayjs(user.last_active_at).isSame(current, 'day')
-    : false
-
-  const newStreak = wasActiveToday ? user.current_streak + 1 : 0
-
-  // Maju ke hari berikutnya (hanya di memory simulasi)
+  // Hanya maju waktu simulasi — streak TIDAK dihitung di sini.
+  // Streak hanya naik saat user nyalakan api (igniteWood).
   setSimulatedDate(user.id, next.toISOString())
 
-  // Hanya update current_streak — JANGAN sentuh last_active_at.
-  // last_active_at hanya boleh diubah oleh aksi user yang nyata
-  // (masak atau igniteWood), bukan oleh pergantian hari simulasi.
-  await query(
-    'UPDATE users SET current_streak=$1, updated_at=NOW() WHERE id=$2',
-    [newStreak, user.id]
-  )
-  invalidateUserCache(user.id)
   return res.json({ message: 'Waktu maju +1 hari.', simulatedDate: next.toISOString() })
 }
