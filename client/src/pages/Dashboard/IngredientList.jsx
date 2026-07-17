@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { getIngredients } from '../../api/ingredients'
 import IngredientCard from './IngredientCard'
 import { useIngredientRealtime } from '../../hooks/useIngredientRealtime'
@@ -31,7 +31,7 @@ const IngredientList = forwardRef(({
   const onDataLoadedRef = useRef(onDataLoaded)
   useEffect(() => { onDataLoadedRef.current = onDataLoaded }, [onDataLoaded])
 
-  const fetchList = async (showLoading = false) => {
+  const fetchList = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true)
     try {
       const res = await getIngredients()
@@ -42,7 +42,7 @@ const IngredientList = forwardRef(({
     } finally {
       if (showLoading) setLoading(false)
     }
-  }
+  }, [householdId])
 
   useIngredientRealtime({
     householdId,
@@ -73,11 +73,14 @@ const IngredientList = forwardRef(({
     return () => clearInterval(interval)
   }, [householdId])
 
+  const fetchListRef = useRef(fetchList)
+  useEffect(() => { fetchListRef.current = fetchList }, [fetchList])
+
   useImperativeHandle(ref, () => ({
-    refresh: () => fetchList(false),
+    refresh: () => fetchListRef.current(false),
     ingredients,
     setIngredients,
-  }), [ingredients, fetchList])
+  }), [ingredients])
 
   const filteredIngredients = useMemo(() => {
     return ingredients.filter(i => {
