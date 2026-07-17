@@ -25,8 +25,6 @@ export async function deleteWasteHistory(req, res) {
     const entry = rows[0]
     if (!entry) return res.status(404).json({ error: 'Not found' })
 
-    // Izinkan hapus jika: entry milik user sendiri ATAU user adalah anggota household yang sama
-    // (GET sudah menampilkan semua entry dalam household, hapus harus konsisten)
     const isSameUser = Number(entry.user_id) === Number(req.user.id)
     const isSameHousehold = await query(
       'SELECT 1 FROM waste_history wh JOIN household_members hm ON hm.user_id = wh.user_id WHERE wh.id=$1 AND hm.household_id=$2',
@@ -37,6 +35,27 @@ export async function deleteWasteHistory(req, res) {
     }
 
     await query('DELETE FROM waste_history WHERE id=$1', [req.params.id])
+
+    // Setelah hapus riwayat busuk, cek apakah ingredient terkait masih punya
+    // waste entry lain. Jika tidak ada, restore status ingredient ke 'active'
+    // supaya angka Busuk di dashboard ikut berkurang.
+    if (entry.ingredient_id) {
+      const remaining = await query(
+        'SELECT id FROM waste_history WHERE ingredient_id=$1 LIMIT 1',
+        [entry.ingredient_id]
+      )
+      if (remaining.rows.length === 0) {
+        // Tidak ada riwayat busuk lain → kembalikan ke active jika quantity > 0
+        await query(
+          `UPDATE ingredients 
+           SET status = CASE WHEN quantity > 0 THEN 'active' ELSE status END,
+               updated_at = NOW()
+           WHERE id = $1 AND status = 'wasted'`,
+          [entry.ingredient_id]
+        )
+      }
+    }
+
     return res.json({ message: 'Dihapus.' })
   } catch (err) {
     return res.status(500).json({ error: err.message })
