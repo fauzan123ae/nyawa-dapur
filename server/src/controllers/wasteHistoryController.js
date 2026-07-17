@@ -45,14 +45,22 @@ export async function deleteWasteHistory(req, res) {
         [entry.ingredient_id]
       )
       if (remaining.rows.length === 0) {
-        // Tidak ada riwayat busuk lain → kembalikan ke active jika quantity > 0
-        await query(
-          `UPDATE ingredients 
-           SET status = CASE WHEN quantity > 0 THEN 'active' ELSE status END,
-               updated_at = NOW()
-           WHERE id = $1 AND status = 'wasted'`,
-          [entry.ingredient_id]
-        )
+        // Tidak ada riwayat busuk lain → hapus ingredient jika quantity = 0,
+        // atau kembalikan ke active jika masih ada sisa quantity
+        const ingRes = await query('SELECT quantity FROM ingredients WHERE id=$1', [entry.ingredient_id])
+        const ing = ingRes.rows[0]
+        if (ing) {
+          if (parseFloat(ing.quantity) <= 0) {
+            // Quantity habis karena di-waste → hapus ingredient dari DB
+            await query('DELETE FROM ingredients WHERE id=$1 AND status=$2', [entry.ingredient_id, 'wasted'])
+          } else {
+            // Masih ada sisa → kembalikan ke active
+            await query(
+              `UPDATE ingredients SET status='active', updated_at=NOW() WHERE id=$1 AND status='wasted'`,
+              [entry.ingredient_id]
+            )
+          }
+        }
       }
     }
 
