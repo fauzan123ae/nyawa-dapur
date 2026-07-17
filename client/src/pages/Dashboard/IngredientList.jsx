@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from 'react'
 import { getIngredients } from '../../api/ingredients'
 import IngredientCard from './IngredientCard'
 import { useIngredientRealtime } from '../../hooks/useIngredientRealtime'
@@ -21,6 +21,7 @@ const IngredientList = forwardRef(({
   onToggleSelectIngredient, onOpenAddModal, onOpenEditModal,
   onAdjustQuantity, onOpenCookAmountModal, onWaste, onDelete,
   onDataLoaded,
+  wasteHistory,
   householdId, currentUserId
 }, ref) => {
   const [ingredients, setIngredients] = useState([])
@@ -31,7 +32,7 @@ const IngredientList = forwardRef(({
   const onDataLoadedRef = useRef(onDataLoaded)
   useEffect(() => { onDataLoadedRef.current = onDataLoaded }, [onDataLoaded])
 
-  const fetchList = useCallback(async (showLoading = false) => {
+  const fetchList = async (showLoading = false) => {
     if (showLoading) setLoading(true)
     try {
       const res = await getIngredients()
@@ -42,7 +43,7 @@ const IngredientList = forwardRef(({
     } finally {
       if (showLoading) setLoading(false)
     }
-  }, [householdId])
+  }
 
   useIngredientRealtime({
     householdId,
@@ -73,14 +74,11 @@ const IngredientList = forwardRef(({
     return () => clearInterval(interval)
   }, [householdId])
 
-  const fetchListRef = useRef(fetchList)
-  useEffect(() => { fetchListRef.current = fetchList }, [fetchList])
-
   useImperativeHandle(ref, () => ({
-    refresh: () => fetchListRef.current(false),
+    refresh: () => fetchList(false),
     ingredients,
     setIngredients,
-  }), [ingredients])
+  }), [ingredients, fetchList])
 
   const filteredIngredients = useMemo(() => {
     return ingredients.filter(i => {
@@ -92,20 +90,20 @@ const IngredientList = forwardRef(({
   }, [ingredients, activeFilter, calculateIngredientHealth, getHealthStatus])
 
   const pantryStats = useMemo(() => {
-    let segar = 0, layu = 0, sekarat = 0, busuk = 0
+    let segar = 0, layu = 0, sekarat = 0
     ingredients.forEach(i => {
-      // Busuk = hanya yang ditandai busuk manual (status wasted)
-      // Bahan expired (health <= 0) tetap masuk Kritis, bukan Busuk
-      if (i.status === 'wasted') { busuk++; return }
       if (i.status !== 'active') return
       const health = calculateIngredientHealth(i)
       const s = getHealthStatus(health).label
       if (s === 'Segar') segar++
       else if (s === 'Waspada') layu++
-      else sekarat++ // Kritis atau expired (health <= 0) masuk Kritis
+      else sekarat++
     })
+    // Busuk = jumlah entri di waste_history (bukan status ingredient)
+    // supaya partial waste (buang sebagian) juga ikut terhitung
+    const busuk = Array.isArray(wasteHistory) ? wasteHistory.length : 0
     return { segar, layu, sekarat, busuk }
-  }, [ingredients, calculateIngredientHealth, getHealthStatus])
+  }, [ingredients, wasteHistory, calculateIngredientHealth, getHealthStatus])
 
   // Kirim stats ke parent hanya saat ingredients atau pantryStats benar-benar berubah.
   // Pakai ref untuk callback agar tidak jadi dependency yang memicu loop.

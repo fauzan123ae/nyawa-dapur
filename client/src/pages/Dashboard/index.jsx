@@ -501,6 +501,7 @@ export default function Dashboard() {
                 onOpenEditModal={handleOpenEdit} onAdjustQuantity={handleAdjustQuantity}
                 onOpenCookAmountModal={handleOpenCookAmount} onWaste={handleWaste} onDelete={handleDelete}
                 onDataLoaded={handleDataLoaded}
+                wasteHistory={wasteHistory}
               />
             </LeftPanel>
           </div>
