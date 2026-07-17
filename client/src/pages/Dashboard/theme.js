@@ -65,7 +65,7 @@ export const themes = {
     fireRing:    { on: 'border-[#E8956A] bg-[#FFE4CE]/60 shadow-lg shadow-[#E8956A]/20 scale-105 rounded-full p-6', off: 'border-[#F5D9C0] bg-[#FFF0E3] rounded-full p-6' },
     fireLabel:   'text-[#C2714F] font-black tracking-wider',
     streakNum:   'text-[#3D2314] font-black',
-    fireOnMsg:   'text-[#2D8C65] font-bold',
+    fireOnMsg:   'text-[#C2714F] font-bold',
     fireOffMsg:  'text-[#B8940A] font-bold',
     igniteBtn:   'bg-gradient-to-r from-[#C2714F] to-[#E8956A] hover:from-[#E8956A] hover:to-[#F5B88A] text-white rounded-xl shadow-md btn-squish transition-all duration-200',
 
@@ -168,7 +168,7 @@ export const themes = {
     fireRing:    { on: 'border-[#F5A96A] bg-[#F5A96A]/10 shadow-lg shadow-[#F5A96A]/15 scale-105 rounded-full p-6', off: 'border-[#4A2E18] bg-[#2E1C0E] rounded-full p-6' },
     fireLabel:   'text-[#F5A96A] font-black',
     streakNum:   'text-[#F5E6D3] font-black',
-    fireOnMsg:   'text-[#6DCBA0] font-bold',
+    fireOnMsg:   'text-[#F5A96A] font-bold',
     fireOffMsg:  'text-[#F5C842] font-bold',
     igniteBtn:   'bg-gradient-to-r from-[#F5A96A] to-[#D4956A] hover:from-[#D4956A] hover:to-[#F5C896] text-[#1C1008] rounded-xl shadow-md btn-squish transition-all duration-200',
 

@@ -34,7 +34,7 @@ export default function Login() {
     <div className="min-h-screen bg-[#FFFDF9] dark:bg-[#1C1008] flex flex-col lg:flex-row transition-colors duration-300">
       
       {/* Left Column / Mobile Top Hero Banner */}
-      <div className="w-full lg:w-1/2 h-[260px] lg:h-auto bg-gradient-to-br from-primary via-[#E8956A] to-cream dark:from-[#1B221F] dark:via-[#222B27] dark:to-[#121714] relative overflow-hidden flex flex-col justify-between p-6 lg:p-12 text-white border-b-2 lg:border-b-0 lg:border-r-2 border-border dark:border-[#4A2E18] shrink-0">
+      <div className="w-full lg:w-1/2 h-[260px] lg:h-auto bg-gradient-to-br from-primary via-[#E8956A] to-cream dark:from-[#1C1008] dark:via-[#2E1C0E] dark:to-[#3A2010] relative overflow-hidden flex flex-col justify-between p-6 lg:p-12 text-white border-b-2 lg:border-b-0 lg:border-r-2 border-border dark:border-[#4A2E18] shrink-0">
         {/* Animated nature details */}
         <div className="absolute top-4 right-10 text-white/10 text-7xl lg:text-9xl pointer-events-none select-none">🍃</div>
         <div className="absolute top-1/4 right-8 lg:right-20 animate-bounce text-xl lg:text-2xl" style={{ animationDuration: '4.5s' }}>🦋</div>
@@ -115,7 +115,7 @@ export default function Login() {
                 type="email" placeholder="Alamat Email" required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full bg-[#FFFDF9] dark:bg-[#2E1C0E] border-2 border-border dark:border-[#4A2E18] rounded-2xl pl-10 pr-4 py-3 text-gray-800 dark:text-[#F5E6D3] text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#F5A96A]/10 focus:border-primary dark:focus:border-[#F5A96A] transition-all duration-200"
+                className="w-full bg-[#FFFDF9] dark:bg-[#2E1C0E] border-2 border-border dark:border-[#4A2E18] rounded-2xl pl-10 pr-4 py-3 text-[#3D2314] dark:text-[#F5E6D3] text-base focus:outline-none focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#F5A96A]/10 focus:border-primary dark:focus:border-[#F5A96A] transition-all duration-200"
               />
             </div>
             
@@ -127,7 +127,7 @@ export default function Login() {
                 type="password" placeholder="Kata Sandi" required
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full bg-[#FFFDF9] dark:bg-[#2E1C0E] border-2 border-border dark:border-[#4A2E18] rounded-2xl pl-10 pr-4 py-3 text-gray-800 dark:text-[#F5E6D3] text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#F5A96A]/10 focus:border-primary dark:focus:border-[#F5A96A] transition-all duration-200"
+                className="w-full bg-[#FFFDF9] dark:bg-[#2E1C0E] border-2 border-border dark:border-[#4A2E18] rounded-2xl pl-10 pr-4 py-3 text-[#3D2314] dark:text-[#F5E6D3] text-base focus:outline-none focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#F5A96A]/10 focus:border-primary dark:focus:border-[#F5A96A] transition-all duration-200"
               />
             </div>
 

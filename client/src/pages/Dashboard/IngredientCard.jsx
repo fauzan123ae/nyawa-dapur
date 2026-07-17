@@ -46,11 +46,11 @@ export default function IngredientCard({
               <span className="animate-sway select-none">
                 {isWasted ? '🍄' : remainingDays <= 2 ? '⚠️' : '🌱'}
               </span>
-              <span className="truncate leading-tight text-gray-800 dark:text-[#F5F5F4]">{ing.name}</span>
+              <span className="truncate leading-tight text-[#3D2314] dark:text-[#F5F5F4]">{ing.name}</span>
               {isCooked && <span className={`text-[9px] px-2 py-0.5 rounded-full font-black border-2 shrink-0 ${t.cookedBadge}`}>Selesai Dimasak 🍳</span>}
             </h3>
             <div className="flex items-center gap-2 mt-2.5">
-              <span className={`text-[9px] font-black uppercase tracking-wider ${isDark ? 'text-stone-500' : 'text-[#8E9AAF]'}`}>Kuantitas</span>
+              <span className={`text-[9px] font-black uppercase tracking-wider ${isDark ? 'text-stone-500' : 'text-[#A07856]'}`}>Kuantitas</span>
               {ing.status === 'active' && !isWasted ? (
                 <div onClick={e => e.stopPropagation()} className={`flex items-center rounded-full py-0.5 px-2 gap-2 border-2 ${t.qtyBox}`}>
                   <button onClick={() => onAdjustQuantity(ing.id, 'minus')} disabled={isItemLoading} className={`text-xs font-black px-1.5 active:scale-75 focus:outline-none transition-transform ${t.qtyMinus}`}>−</button>
@@ -58,7 +58,7 @@ export default function IngredientCard({
                   <button onClick={() => onAdjustQuantity(ing.id, 'plus')} disabled={isItemLoading} className={`text-xs font-black px-1.5 active:scale-75 focus:outline-none transition-transform ${t.qtyPlus}`}>+</button>
                 </div>
               ) : (
-                <span className={`text-xs font-mono font-black px-2 py-0.5 rounded-lg bg-cream border border-border ${isDark ? 'text-stone-300' : 'text-gray-700'}`}>{ing.quantity} {ing.unit}</span>
+                <span className={`text-xs font-mono font-black px-2 py-0.5 rounded-lg bg-cream border border-border ${isDark ? 'text-stone-300' : 'text-[#3D2314]'}`}>{ing.quantity} {ing.unit}</span>
               )}
             </div>
           </div>
